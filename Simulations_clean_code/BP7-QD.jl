@@ -13,10 +13,10 @@ CUDA.allowscalar(false)
 
 function main()
     time_string = Dates.format(now(), "yyyymmddHHMM")
-    @show BP5_coeff.Δz
+    @show BP7_coeff.Δz
 
     # setting b = b0
-    b = BP5_coeff.b0
+    b = BP7_coeff.b0
     Vzero = 1e-20
 
     @unpack_namedtuple odeparam
@@ -30,9 +30,9 @@ function main()
     for i in 1:fN2
         for j in 1:fN3
             index = i + (j - 1) * fN2
-            x2 = (i - 1) * BP5_coeff.Δz / 1000 - BP5_coeff.lf / 2
-            x3 = (j - 1) * BP5_coeff.Δz / 1000
-            RSas[index] = a_func(x2, x3, BP5_coeff)
+            x2 = (i - 1) * BP7_coeff.Δz / 1000 - BP7_coeff.lf / 2
+            x3 = (j - 1) * BP7_coeff.Δz / 1000
+            RSas[index] = a_func(x2, x3, BP7_coeff)
         end
     end
 
@@ -40,7 +40,7 @@ function main()
     for i in 1:Ny
         for j in 1:Nz
             index = i + (j - 1) * Ny
-            V[2*index-1] = BP5_coeff.Vinit
+            V[2*index-1] = BP7_coeff.Vinit
             V[2*index] = Vzero
         end
     end
@@ -48,7 +48,7 @@ function main()
 
 
     # initializing \boldsymbol{τ}^0 for the entire domain
-    V_norm = norm([BP5_coeff.Vinit, Vzero])
+    V_norm = norm([BP7_coeff.Vinit, Vzero])
     τ = @view τb[1:2:length(τb)]
     τz = @view τb[2:2:length(τb)]
 
@@ -57,17 +57,17 @@ function main()
         for j in 1:fN3
             index = i + (j - 1) * fN2
             tau_index = RS_filter_2D_nzind[index]
-            τ0 = BP5_coeff.σn * RSas[index] * asinh((BP5_coeff.Vinit / (2 * BP5_coeff.V0) *
-                                                     exp((BP5_coeff.f0 + BP5_coeff.b0 * log(BP5_coeff.V0 / BP5_coeff.Vinit)) /
-                                                         RSas[index])) + η * BP5_coeff.Vinit)
-            τ[tau_index] = τ0 * BP5_coeff.Vinit / V_norm
+            τ0 = BP7_coeff.σn * RSas[index] * asinh((BP7_coeff.Vinit / (2 * BP7_coeff.V0) *
+                                                     exp((BP7_coeff.f0 + BP7_coeff.b0 * log(BP7_coeff.V0 / BP7_coeff.Vinit)) /
+                                                         RSas[index])) + η * BP7_coeff.Vinit)
+            τ[tau_index] = τ0 * BP7_coeff.Vinit / V_norm
             τz[tau_index] = τ0 * Vzero / V_norm
 
-            θ0 = BP5_coeff.L / BP5_coeff.V0 * exp(RSas[index] / BP5_coeff.b0 *
-                                                  log(2 * BP5_coeff.V0 / BP5_coeff.Vinit * sinh((τ0 - η * BP5_coeff.Vinit) / (RSas[index] * BP5_coeff.σn)))
+            θ0 = BP7_coeff.L / BP7_coeff.V0 * exp(RSas[index] / BP7_coeff.b0 *
+                                                  log(2 * BP7_coeff.V0 / BP7_coeff.Vinit * sinh((τ0 - η * BP7_coeff.Vinit) / (RSas[index] * BP7_coeff.σn)))
                                                   -
-                                                  BP5_coeff.f0 / BP5_coeff.b0)
-            ψ0 = BP5_coeff.f0 + BP5_coeff.b0 * log(BP5_coeff.V0 * θ0 / BP5_coeff.L)
+                                                  BP7_coeff.f0 / BP7_coeff.b0)
+            ψ0 = BP7_coeff.f0 + BP7_coeff.b0 * log(BP7_coeff.V0 * θ0 / BP7_coeff.L)
             ψ[index] = ψ0
             θ[index] = θ0
         end
@@ -79,8 +79,8 @@ function main()
             index = i + (j - 1) * fN2
             tau_index = RS_filter_2D_nzind[index]
             if index in VW_favorable_filter_RS_nzind
-                τ0 = BP5_coeff.σn * RSas[index] * asinh((0.03 / (2 * BP5_coeff.V0) *
-                                                         exp((BP5_coeff.f0 + BP5_coeff.b0 * log(BP5_coeff.V0 / BP5_coeff.Vinit)) /
+                τ0 = BP7_coeff.σn * RSas[index] * asinh((0.03 / (2 * BP7_coeff.V0) *
+                                                         exp((BP7_coeff.f0 + BP7_coeff.b0 * log(BP7_coeff.V0 / BP7_coeff.Vinit)) /
                                                              RSas[index])) + η * 0.03)
                 τ[tau_index] = τ0
                 V2_v[index] = 0.03

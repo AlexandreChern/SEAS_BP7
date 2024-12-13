@@ -1,4 +1,4 @@
-# Helper functions for BP5-QD and BP5-FD simulations
+# Helper functions for BP7-QD and BP7-FD simulations
 using DifferentialEquations
 using Printf
 using Plots
@@ -77,72 +77,72 @@ coefficients() = coefficients(
 
 # initial state variable over the entire fault
 # x2 
-function θ0_func(Nx, Ny, BP5_coeff::coefficients)
-    return fill(BP5_coeff.L / BP5_coeff.Vinit, Nx * Ny)
+function θ0_func(Nx, Ny, BP7_coeff::coefficients)
+    return fill(BP7_coeff.L / BP7_coeff.Vinit, Nx * Ny)
 end
 
-# for BP5, b is set to be the constant value b0
+# for BP7, b is set to be the constant value b0
 # using b in the variables of the functions below 
 # to write more modular code easier to maintain
 
-function f_func(V, θ, a, b, BP5_coeff::coefficients)
+function f_func(V, θ, a, b, BP7_coeff::coefficients)
     return a * asinh(
-        V / (2 * BP5_coeff.V0) * exp((BP5_coeff.f0 + b * ln(BP5_coeff.V0 / BP5_coeff.L)) / a) # is b the value b0 in coefficients?
+        V / (2 * BP7_coeff.V0) * exp((BP7_coeff.f0 + b * ln(BP7_coeff.V0 / BP7_coeff.L)) / a) # is b the value b0 in coefficients?
     )
 end
 
-function a_func(x2, x3, BP5_coeff::coefficients)
-    if (BP5_coeff.hs + BP5_coeff.ht ≤ x3 ≤ BP5_coeff.hs + BP5_coeff.ht + BP5_coeff.H) && (abs(x2) ≤ BP5_coeff.l / 2)
-        return BP5_coeff.a0
-    elseif (0 ≤ x3 ≤ BP5_coeff.hs) || (BP5_coeff.hs + 2 * BP5_coeff.ht + BP5_coeff.H ≤ x3 ≤ BP5_coeff.Wf) || (BP5_coeff.l / 2 + BP5_coeff.ht ≤ abs(x2) ≤ BP5_coeff.lf / 2)
-        return BP5_coeff.amax
+function a_func(x2, x3, BP7_coeff::coefficients)
+    if (BP7_coeff.hs + BP7_coeff.ht ≤ x3 ≤ BP7_coeff.hs + BP7_coeff.ht + BP7_coeff.H) && (abs(x2) ≤ BP7_coeff.l / 2)
+        return BP7_coeff.a0
+    elseif (0 ≤ x3 ≤ BP7_coeff.hs) || (BP7_coeff.hs + 2 * BP7_coeff.ht + BP7_coeff.H ≤ x3 ≤ BP7_coeff.Wf) || (BP7_coeff.l / 2 + BP7_coeff.ht ≤ abs(x2) ≤ BP7_coeff.lf / 2)
+        return BP7_coeff.amax
     else
-        r = max(abs(x3 - BP5_coeff.hs - BP5_coeff.ht - BP5_coeff.H / 2) - BP5_coeff.H / 2, abs(x2) - BP5_coeff.l / 2) / BP5_coeff.ht
-        return BP5_coeff.a0 + r * (BP5_coeff.amax - BP5_coeff.a0)
+        r = max(abs(x3 - BP7_coeff.hs - BP7_coeff.ht - BP7_coeff.H / 2) - BP7_coeff.H / 2, abs(x2) - BP7_coeff.l / 2) / BP7_coeff.ht
+        return BP7_coeff.a0 + r * (BP7_coeff.amax - BP7_coeff.a0)
     end
 end
 
 # auxiliary function to determine which region a belongs to
-function a_func_region(x2, x3, BP5_coeff::coefficients)
-    if (BP5_coeff.hs + BP5_coeff.ht ≤ x3 ≤ BP5_coeff.hs + BP5_coeff.ht + BP5_coeff.H) && (abs(x2) ≤ BP5_coeff.l / 2)
+function a_func_region(x2, x3, BP7_coeff::coefficients)
+    if (BP7_coeff.hs + BP7_coeff.ht ≤ x3 ≤ BP7_coeff.hs + BP7_coeff.ht + BP7_coeff.H) && (abs(x2) ≤ BP7_coeff.l / 2)
         return 0
-    elseif (0 ≤ x3 ≤ BP5_coeff.hs) || (BP5_coeff.hs + 2 * BP5_coeff.ht + BP5_coeff.H ≤ x3 ≤ BP5_coeff.Wf) || (BP5_coeff.l / 2 + BP5_coeff.ht ≤ abs(x2) ≤ BP5_coeff.lf / 2)
+    elseif (0 ≤ x3 ≤ BP7_coeff.hs) || (BP7_coeff.hs + 2 * BP7_coeff.ht + BP7_coeff.H ≤ x3 ≤ BP7_coeff.Wf) || (BP7_coeff.l / 2 + BP7_coeff.ht ≤ abs(x2) ≤ BP7_coeff.lf / 2)
         return 2
     else
-        r = max(abs(x3 - BP5_coeff.hs - BP5_coeff.ht - BP5_coeff.H / 2) - BP5_coeff.H / 2, abs(x2) - BP5_coeff.l / 2) / BP5_coeff.ht
+        r = max(abs(x3 - BP7_coeff.hs - BP7_coeff.ht - BP7_coeff.H / 2) - BP7_coeff.H / 2, abs(x2) - BP7_coeff.l / 2) / BP7_coeff.ht
         return 1
     end
 end
 
-# For BP5-QD, the scalar pre-stress τ⁰ is chosen as the steady-state stress
-function τ0_QD_func(a, b, η, BP5_coeff::coefficients)
-    return BP5_coeff.σn * a * asinh(BP5_coeff.Vinit / (2 * BP5_coeff.V0) * exp((BP5_coeff.f0 + b) / a)) + η * BP5_coeff.Vinit
+# For BP7-QD, the scalar pre-stress τ⁰ is chosen as the steady-state stress
+function τ0_QD_func(a, b, η, BP7_coeff::coefficients)
+    return BP7_coeff.σn * a * asinh(BP7_coeff.Vinit / (2 * BP7_coeff.V0) * exp((BP7_coeff.f0 + b) / a)) + η * BP7_coeff.Vinit
 end
 
-# For BP5-QD, the scalar pre-stress τ⁰ is chosen as the steady-state stress
-function τ0_FD_func(a, b, BP5_coeff::coefficients)
-    return BP5_coeff.σn * asinh(BP5_coeff.Vinit / (2 * BP5_coeff.V0) * exp((BP5_coeff.f0 + b) / a))
+# For BP7-QD, the scalar pre-stress τ⁰ is chosen as the steady-state stress
+function τ0_FD_func(a, b, BP7_coeff::coefficients)
+    return BP7_coeff.σn * asinh(BP7_coeff.Vinit / (2 * BP7_coeff.V0) * exp((BP7_coeff.f0 + b) / a))
 end
 
 # a higher pre-stress along the x2-direction
-function τi0_FD_func(a, b, δ, τ, BP5_coeff::coefficients)
-    return BP5_coeff.σn * asinh(BP5_coeff.Vinit / (2 * BP5_coeff.V0) * exp((BP5_coeff.f0 + b) / a)) + δ * τ
+function τi0_FD_func(a, b, δ, τ, BP7_coeff::coefficients)
+    return BP7_coeff.σn * asinh(BP7_coeff.Vinit / (2 * BP7_coeff.V0) * exp((BP7_coeff.f0 + b) / a)) + δ * τ
 end
 
 
 # quasi-static process zone
-function Λ0_func(C, b, μ, BP5_coeff::coefficients)
-    return C * μ * BP5_coeff.L / (b * BP5_coeff.σn)
+function Λ0_func(C, b, μ, BP7_coeff::coefficients)
+    return C * μ * BP7_coeff.L / (b * BP7_coeff.σn)
 end
 
 # nucleation zone
-function h_func(a, b, μ, BP5_coeff::coefficients)
-    return π / 2 * (μ * b * BP5_coeff.L) / ((b - a)^2 * BP5_coeff.σn)^2
+function h_func(a, b, μ, BP7_coeff::coefficients)
+    return π / 2 * (μ * b * BP7_coeff.L) / ((b - a)^2 * BP7_coeff.σn)^2
 end
 
 # fault strength
-function F_func(f, Vbold, BP5_coeff::coefficients)
-    return BP5_coeff.σn * f * Vbold / norm(V)
+function F_func(f, Vbold, BP7_coeff::coefficients)
+    return BP7_coeff.σn * f * Vbold / norm(V)
 end
 
 
@@ -403,7 +403,7 @@ function create_text_files(path, station_strings, station_indices, δ, τb, θ, 
         RS_index = RS_filter_2D_nzind[station_indices[n]]
         ww[2] = δ[2 * RS_index-1]
         ww[3] = δ[2 * RS_index]
-        # ww[4] = log10(BP5_coeff.Vinit)
+        # ww[4] = log10(BP7_coeff.Vinit)
         ww[4] = log10(abs(V2_v[station_indices[n]]))
         ww[5] = log10(Vzero)
         ww[6] = τb[2 * RS_index - 1] # need to define this
@@ -411,7 +411,7 @@ function create_text_files(path, station_strings, station_indices, δ, τb, θ, 
         ww[8] = log10(θ[station_indices[n]])  # 
         open(XXX, "w") do io
             write(io, "# This is the file header")
-            write(io, "# problem=SEAS Benchmark BP5-QD\n")  # 
+            write(io, "# problem=SEAS Benchmark BP7-QD\n")  # 
             write(io, "# code=Thrase\n")
             write(io, "# modeler=B. A. Erickson\n")
             write(io, "# date=2023/01/09\n")
@@ -460,7 +460,7 @@ function write_to_file(path, ψδ, t, i, odeparam, station_strings, station_indi
                 ww[5] = log10(V3_real)
                 ww[6] = τfb[2 * RS_index - 1] # need to define this
                 ww[7] = τfb[2 * RS_index]
-                θ = BP5_coeff.L / BP5_coeff.V0 * exp((ψ[station_indices[n]] - BP5_coeff.f0)/BP5_coeff.b0)
+                θ = BP7_coeff.L / BP7_coeff.V0 * exp((ψ[station_indices[n]] - BP7_coeff.f0)/BP7_coeff.b0)
                 ww[8] = log10(θ)
                 open(XXX, "a") do io
                     writedlm(io, ww)

@@ -4,11 +4,11 @@ include("helper.jl")
 const year_seconds = 31556926
 sim_years = 1800
 
-# calling parameterized constructor to set values for BP5
-# if BP5_coeff is not defined here, the BP5-QD.jl will 
-# call default constructor to construct BP5_coeff using
+# calling parameterized constructor to set values for BP7
+# if BP7_coeff is not defined here, the BP7-QD.jl will 
+# call default constructor to construct BP7_coeff using
 # values in helper.jl (line 51)
-BP5_coeff = coefficients(
+BP7_coeff = coefficients(
     2670,                   # ρ
     3.464,                  # cs
     0.25,                   # ν
@@ -37,7 +37,7 @@ include("Assembling_3D_matrices.jl")
 
 # The entire domain is 128 km by 128 km by 128 km
 Lx = Ly = Lz = 256
-N_x = N_y = N_z = Int(Lx / (BP5_coeff.Δz / 1000))
+N_x = N_y = N_z = Int(Lx / (BP7_coeff.Δz / 1000))
 Nx = N_x + 1
 Ny = N_y + 1
 Nz = N_z + 1
@@ -48,46 +48,46 @@ u2_filter_matrix = get_u2(Nx, Ny, Nz)
 u3_filter_matrix = get_u3(Nx, Ny, Nz)
 
 
-fN2 = BP5_coeff.lf / (BP5_coeff.Δz / 1000) + 1
+fN2 = BP7_coeff.lf / (BP7_coeff.Δz / 1000) + 1
 fN2 = round(Int, fN2, RoundUp)
-fN3 = BP5_coeff.Wf / (BP5_coeff.Δz / 1000) + 1
+fN3 = BP7_coeff.Wf / (BP7_coeff.Δz / 1000) + 1
 fN3 = round(Int, fN3, RoundUp)
 
 # fNy and fNz represents the indices of the fault region
-fNy_start = (Ly - BP5_coeff.lf) / (2 * BP5_coeff.Δz / 1000) + 1
+fNy_start = (Ly - BP7_coeff.lf) / (2 * BP7_coeff.Δz / 1000) + 1
 fNy_start = round(Int, fNy_start, RoundUp)
 fNy = (fNy_start, fNy_start + fN2 - 1)                    # y direction 
 fNz = (1, fN3)                   # z direction
 
 # VW region of the RS
 
-fN2_VW = BP5_coeff.l /(BP5_coeff.Δz / 1000) + 1
+fN2_VW = BP7_coeff.l /(BP7_coeff.Δz / 1000) + 1
 fN2_VW = round(Int, fN2_VW, RoundUp)
-fN2_VW_favorable = BP5_coeff.w / (BP5_coeff.Δz / 1000) + 1
+fN2_VW_favorable = BP7_coeff.w / (BP7_coeff.Δz / 1000) + 1
 fN2_VW_favorable = round(Int, fN2_VW_favorable, RoundUp)
-fN3_VW = BP5_coeff.H / (BP5_coeff.Δz / 1000) + 1
+fN3_VW = BP7_coeff.H / (BP7_coeff.Δz / 1000) + 1
 fN3_VW = round(Int, fN3_VW, RoundUp)
 
 # fNy_VW and fNz_VW represents the indices of the fault region
-fNy_VW_start = (Ly - BP5_coeff.l) / (2 * BP5_coeff.Δz / 1000) + 1
+fNy_VW_start = (Ly - BP7_coeff.l) / (2 * BP7_coeff.Δz / 1000) + 1
 fNy_VW_start = round(Int, fNy_VW_start, RoundUp)
 fNy_VW = (fNy_VW_start, fNy_VW_start + fN2_VW - 1)
 fNy_VW_favorable = (fNy_VW_start, fNy_VW_start + fN2_VW_favorable - 1)
-fNz_VW_start = round(Int, (BP5_coeff.hs + BP5_coeff.ht) / (BP5_coeff.Δz / 1000), RoundUp) + 1
+fNz_VW_start = round(Int, (BP7_coeff.hs + BP7_coeff.ht) / (BP7_coeff.Δz / 1000), RoundUp) + 1
 fNz_VW = (fNz_VW_start, fNz_VW_start + fN3_VW - 1)
 
 
 # VW-VS transition region
-fN2_VW_VS = (BP5_coeff.l + 2 * BP5_coeff.ht) / (BP5_coeff.Δz / 1000) + 1
+fN2_VW_VS = (BP7_coeff.l + 2 * BP7_coeff.ht) / (BP7_coeff.Δz / 1000) + 1
 fN2_VW_VS = round(Int, fN2_VW_VS, RoundUp)
 
-fN3_VW_VS = (BP5_coeff.H + BP5_coeff.ht * 2) / (BP5_coeff.Δz / 1000) + 1
+fN3_VW_VS = (BP7_coeff.H + BP7_coeff.ht * 2) / (BP7_coeff.Δz / 1000) + 1
 fN3_VW_VS = round(Int, fN3_VW_VS, RoundUp)
 
-fNy_VW_VS_start = (Ly- BP5_coeff.l - BP5_coeff.ht) / (2 * BP5_coeff.Δz / 1000) + 1
+fNy_VW_VS_start = (Ly- BP7_coeff.l - BP7_coeff.ht) / (2 * BP7_coeff.Δz / 1000) + 1
 fNy_VW_VS_start = round(Int, fNy_VW_VS_start, RoundUp)
 fNy_VW_VS = (fNy_VW_VS_start, fNy_VW_VS_start + fN2_VW_VS - 1)
-fNz_VW_VS_start = round(Int, BP5_coeff.hs / (BP5_coeff.Δz / 1000), RoundUp) + 1
+fNz_VW_VS_start = round(Int, BP7_coeff.hs / (BP7_coeff.Δz / 1000), RoundUp) + 1
 fNz_VW_VS = (fNz_VW_VS_start, fNz_VW_VS_start + fN3_VW_VS - 1)
 
 # fNy_VW_VS and fNz_VW represents the indices of the fault region
@@ -242,15 +242,15 @@ fltst = [
 function find_flt_indices(indices, lf, fN2)
     x2 = indices[2]
     x3 = indices[3]
-    j = Int(round((x2 - (-lf / 2)) / (BP5_coeff.Δz / 1000))) + 1 # starting with 1
-    k = Int(round((x3 - 0) / (BP5_coeff.Δz / 1000))) # starting with 0 (multiplied by fN2) no +1
+    j = Int(round((x2 - (-lf / 2)) / (BP7_coeff.Δz / 1000))) + 1 # starting with 1
+    k = Int(round((x3 - 0) / (BP7_coeff.Δz / 1000))) # starting with 0 (multiplied by fN2) no +1
     return j + k * fN2
 end
 
 # time_string = Dates.format(now(),"yyyymmddHHMM")
 # path="./output/$time_string/"
 path="./output"
-station_indices = find_flt_indices.(fltst,BP5_coeff.lf, fN2)
+station_indices = find_flt_indices.(fltst,BP7_coeff.lf, fN2)
 station_strings = ["-36dp+00", "-16dp+00", "+00dp+00", "+16dp+00", "+36dp+00",
                     "-24dp+10", "-16dp+10", "+00dp+10","+16dp+10",
                     "+00dp+22"]

@@ -1,7 +1,0 @@
-sol = solve(prob, Tsit5(); isoutofdomain=stepcheck, dt=0.001, dtmin=1e-8, abstol=1e-8, reltol=1e-8, save_everystep=false,
-        callback=callback_func) 
-
-
-SBPp = 4
-
-mgcg_CUDA(mg_struct_CUDA,nx=N_x,ny=N_y,nz=N_z,n_levels=n_levels,precond=true,max_mg_iterations=1, v1=5, v2=5, v3=5, max_cg_iter=20, scaling_factor=1, rel_tol=1e-6, print_results=true)

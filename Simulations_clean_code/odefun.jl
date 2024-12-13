@@ -13,7 +13,7 @@ initialize_mg_struct_CUDA(mg_struct_CUDA, N_x, N_y, N_z, n_levels)
 
 odeparam = (
     reject_step = [false],                          # to reject a step or not
-    Vp = BP5_coeff.Vp,                              # plate rate
+    Vp = BP7_coeff.Vp,                              # plate rate
     M = M,                                          # LHS of the linear system M*u=RHS
     M_GPU = M_GPU,                                  # GPU array of the LHS system
     u = zeros(size(RHS)),                           # solution for the linear system 
@@ -30,16 +30,16 @@ odeparam = (
     τ_v = fill(13.0, fN2 * fN3),                      # norm of the traction
     counter = [],                                   # counter for slip with Vmax >= threshold
     RHS = RHS,                                      # RHS of the linear system
-    μshear = BP5_coeff.cs^2 * BP5_coeff.ρ ,         # constant?
-    RSa = BP5_coeff.a0,                             # rate-and-state distance a0
-    RSb = BP5_coeff.b0,                             # rate-and-state distance b0
-    σn = BP5_coeff.σn,                              # effective normal stress
-    η = BP5_coeff.cs * BP5_coeff.ρ / (2 * 1000) ,   # bug? should be \mu /(2 * cs) 
-    RSV0 = BP5_coeff.V0,                            # rate-and-state reference slip rate
+    μshear = BP7_coeff.cs^2 * BP7_coeff.ρ ,         # constant?
+    RSa = BP7_coeff.a0,                             # rate-and-state distance a0
+    RSb = BP7_coeff.b0,                             # rate-and-state distance b0
+    σn = BP7_coeff.σn,                              # effective normal stress
+    η = BP7_coeff.cs * BP7_coeff.ρ / (2 * 1000) ,   # bug? should be \mu /(2 * cs) 
+    RSV0 = BP7_coeff.V0,                            # rate-and-state reference slip rate
     τ0 = zeros((N_x + 1) * (N_y + 1)),              # pre-stress                                     # 
-    RSL = BP5_coeff.L,                              # rate-and-state critical slip distance L
-    RSLs = fill(BP5_coeff.L, fN2 * fN3),            # rate-and-state critical slip distance Ls (0.13/0.14)
-    RSf0 = BP5_coeff.f0,                            # rate-and-state reference friction coefficient 
+    RSL = BP7_coeff.L,                              # rate-and-state critical slip distance L
+    RSLs = fill(BP7_coeff.L, fN2 * fN3),            # rate-and-state critical slip distance Ls (0.13/0.14)
+    RSf0 = BP7_coeff.f0,                            # rate-and-state reference friction coefficient 
     N = N_x,                                        # number of grids in each direction, assuming idential of grid in x,y,z directions
     δNp = N_x + 1,                                  # number of grid points in each direction, assuming idential of grid in x,y,z directions
     Face_operators,                                 # getting face values from 3D SparseArrays

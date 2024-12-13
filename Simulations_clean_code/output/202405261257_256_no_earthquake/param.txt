@@ -1,6 +1,0 @@
-N = 256
-sol = solve(prob, Tsit5(); isoutofdomain=stepcheck, dt=0.001, dtmin=1e-8, abstol=1e-6, reltol=1e-6, save_everystep=false,
-        callback=callback_func) 
-
-
-Doesn't see earthquake behavior
