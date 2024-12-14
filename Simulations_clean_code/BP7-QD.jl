@@ -27,6 +27,7 @@ function main()
     dψ, V, ψ, δ = create_view(dψV, ψδ)
     θ = zeros(size(ψ))
 
+    # TODO: rewrite this for BP7
     for i in 1:fN2
         for j in 1:fN3
             index = i + (j - 1) * fN2

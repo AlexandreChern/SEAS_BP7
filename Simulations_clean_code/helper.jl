@@ -26,53 +26,59 @@ end
 
 struct coefficients
     # Table 1: Parameter values used in this benchmark problem 
-    #        # variable names                        # recommended values                
-    ρ       # density                               2670 kg/m³
-    cs      # shear wave speed                      3.464 km/s
-    ν       # Poisson's ratio                       0.25
-    a0      # rate-and-state parameter              0.004
-    amax    # rate-and-state parameter              0.04
-    b0      # rate-and-state parameter              0.03
-    σn      # effective normal stress               25 MPa
-    L       # critical slip distance                0.14 m/0.13 m 
-    Vp      # plate rate                            10⁻⁹ m/s
-    Vinit   # initial slip rate                     10⁻⁹ m/s
-    V0      # reference slip rate                   10⁻⁶ m/s 
-    f0      # reference friction coefficient        0.6
-    hs      # width of shallow VS zone              2 km
-    ht      # width of VW-VS transition zone        2 km
-    H       # width of uniform VW region            12 km
-    l       # length of uniform VW region           60 km
-    Wf      # width of rate-and-state fault         40 km
-    lf      # length of rate-and-state fault        100 km
-    w       # width of favorible nucleation zone    12 km
-    Δz      # suggested cell size                   1000m
-    tf      # final simulation time                 1800 years
+    #        # variable names                                   # recommended values                
+    ρ       # density                                           2670 kg/m³
+    cs      # shear wave speed                                  3.464 km/s
+    μ       # shear modulus                                     32.04 GPa
+    ν       # Poisson's ratio                                   0.25
+    a0      # rate-and-state parameter                          0.004
+    amax    # rate-and-state parameter                          0.016
+    b0      # rate-and-state parameter                          0.01
+    σn      # effective normal stress                           25 MPa
+    DRS     # characteristic slip distance                      0.50 / 0.53 mm
+    Vp      # plate rate                                        10⁻⁹ m/s
+    VL      # imposed fault slip rate                           10⁻⁹ m/s
+    Vinit   # initial slip rate                                 10⁻⁹ m/s
+    V0      # reference slip rate                               10⁻⁶ m/s 
+    f0      # reference friction coefficient                    0.6
+    RVW     # radius of uniform VW region                       200 m
+    Wf      # half-width of rate-and-state fault                400 m
+    lf      # half-length of rate-and-state fault               400 m
+    Δz      # suggested cell size                               1000m
+    tf      # final simulation time                             10 years 
+    Δτ0     # max amplitude of nucleation stress perturbation   2 MPa 
+    Rnuc    # radius of the nucleation stress perturbation      150 m
+    T       # Duration of the nucleation stress perturbation    1s
+    y1      # hypocenter for nucleation stress perturbation    -50
+    y3      # hypocenter for nucleation stress perturbation     -50
 end
 
 # default constructor
 coefficients() = coefficients(
     2670,                   # ρ
     3.464,                  # cs
+    32.04                   # μ
     0.25,                   # ν
     0.004,                  # a0
-    0.04,                   # amax
-    0.03,                   # b0            value for b in this problem
+    0.016,                   # amax
+    0.01,                   # b0            value for b in this problem
     25,                     # σn
-    0.14,                   # L
+    0.50,                   # DRS
     1E-9,                   # Vp
+    1E-9                    # VL
     1E-9,                   # Vinit
     1E-6,                   # V0
     0.6,                    # f0
-    2,                      # hs
-    2,                      # ht
-    12,                     # H
-    60,                     # l
-    40,                     # Wf
-    100,                    # lf
-    12,                     # w
-    1000,                   # Δz in meter, 
-    1800                    # tf
+    200,                    # RVW
+    400,                    # Wf
+    400,                    # lf
+    10,                     # Δz in meter, 
+    10,                     # tf
+    2,                      # Δτ0
+    150,                    # Rnuc
+    1,                      # T 
+    -50,                    # y2
+    -50                     # y3
 )
 
 # initial state variable over the entire fault
@@ -91,28 +97,37 @@ function f_func(V, θ, a, b, BP7_coeff::coefficients)
     )
 end
 
-function a_func(x2, x3, BP7_coeff::coefficients)
-    if (BP7_coeff.hs + BP7_coeff.ht ≤ x3 ≤ BP7_coeff.hs + BP7_coeff.ht + BP7_coeff.H) && (abs(x2) ≤ BP7_coeff.l / 2)
-        return BP7_coeff.a0
-    elseif (0 ≤ x3 ≤ BP7_coeff.hs) || (BP7_coeff.hs + 2 * BP7_coeff.ht + BP7_coeff.H ≤ x3 ≤ BP7_coeff.Wf) || (BP7_coeff.l / 2 + BP7_coeff.ht ≤ abs(x2) ≤ BP7_coeff.lf / 2)
-        return BP7_coeff.amax
+# TODO BP7 is homogeneous and isotropic, a_func and a_func_region is replaced
+# function a_func(x2, x3, BP7_coeff::coefficients)
+#     if (BP7_coeff.hs + BP7_coeff.ht ≤ x3 ≤ BP7_coeff.hs + BP7_coeff.ht + BP7_coeff.H) && (abs(x2) ≤ BP7_coeff.l / 2)
+#         return BP7_coeff.a0
+#     elseif (0 ≤ x3 ≤ BP7_coeff.hs) || (BP7_coeff.hs + 2 * BP7_coeff.ht + BP7_coeff.H ≤ x3 ≤ BP7_coeff.Wf) || (BP7_coeff.l / 2 + BP7_coeff.ht ≤ abs(x2) ≤ BP7_coeff.lf / 2)
+#         return BP7_coeff.amax
+#     else
+#         r = max(abs(x3 - BP7_coeff.hs - BP7_coeff.ht - BP7_coeff.H / 2) - BP7_coeff.H / 2, abs(x2) - BP7_coeff.l / 2) / BP7_coeff.ht
+#         return BP7_coeff.a0 + r * (BP7_coeff.amax - BP7_coeff.a0)
+#     end
+# end
+function G1_func(x2, x3, BP7_coeff::coefficients)
+    r =  sqrt((x2 - BP7_coeff.y2)^2 + (x3 - BP7_coeff.y3)^2)
+    if r < BP7_coeff.Rnuc
+        return exp(r^2 / (r^2 - Rnuc^2))
     else
-        r = max(abs(x3 - BP7_coeff.hs - BP7_coeff.ht - BP7_coeff.H / 2) - BP7_coeff.H / 2, abs(x2) - BP7_coeff.l / 2) / BP7_coeff.ht
-        return BP7_coeff.a0 + r * (BP7_coeff.amax - BP7_coeff.a0)
+        return 0
     end
 end
 
 # auxiliary function to determine which region a belongs to
-function a_func_region(x2, x3, BP7_coeff::coefficients)
-    if (BP7_coeff.hs + BP7_coeff.ht ≤ x3 ≤ BP7_coeff.hs + BP7_coeff.ht + BP7_coeff.H) && (abs(x2) ≤ BP7_coeff.l / 2)
-        return 0
-    elseif (0 ≤ x3 ≤ BP7_coeff.hs) || (BP7_coeff.hs + 2 * BP7_coeff.ht + BP7_coeff.H ≤ x3 ≤ BP7_coeff.Wf) || (BP7_coeff.l / 2 + BP7_coeff.ht ≤ abs(x2) ≤ BP7_coeff.lf / 2)
-        return 2
-    else
-        r = max(abs(x3 - BP7_coeff.hs - BP7_coeff.ht - BP7_coeff.H / 2) - BP7_coeff.H / 2, abs(x2) - BP7_coeff.l / 2) / BP7_coeff.ht
-        return 1
-    end
-end
+# function a_func_region(x2, x3, BP7_coeff::coefficients)
+#     if (BP7_coeff.hs + BP7_coeff.ht ≤ x3 ≤ BP7_coeff.hs + BP7_coeff.ht + BP7_coeff.H) && (abs(x2) ≤ BP7_coeff.l / 2)
+#         return 0
+#     elseif (0 ≤ x3 ≤ BP7_coeff.hs) || (BP7_coeff.hs + 2 * BP7_coeff.ht + BP7_coeff.H ≤ x3 ≤ BP7_coeff.Wf) || (BP7_coeff.l / 2 + BP7_coeff.ht ≤ abs(x2) ≤ BP7_coeff.lf / 2)
+#         return 2
+#     else
+#         r = max(abs(x3 - BP7_coeff.hs - BP7_coeff.ht - BP7_coeff.H / 2) - BP7_coeff.H / 2, abs(x2) - BP7_coeff.l / 2) / BP7_coeff.ht
+#         return 1
+#     end
+# end
 
 # For BP7-QD, the scalar pre-stress τ⁰ is chosen as the steady-state stress
 function τ0_QD_func(a, b, η, BP7_coeff::coefficients)
