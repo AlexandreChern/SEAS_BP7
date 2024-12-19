@@ -57,7 +57,7 @@ end
 coefficients() = coefficients(
     2670,                   # ρ
     3.464,                  # cs
-    32.04                   # μ
+    32.04,                   # μ
     0.25,                   # ν
     0.004,                  # a0
     0.016,                   # amax
@@ -65,7 +65,7 @@ coefficients() = coefficients(
     25,                     # σn
     0.50,                   # DRS
     1E-9,                   # Vp
-    1E-9                    # VL
+    1E-9,                    # VL
     1E-9,                   # Vinit
     1E-6,                   # V0
     0.6,                    # f0

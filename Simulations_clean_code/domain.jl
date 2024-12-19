@@ -11,26 +11,30 @@ sim_years = 1800
 BP7_coeff = coefficients(
     2670,                   # ρ
     3.464,                  # cs
+    32.04,                   # μ
     0.25,                   # ν
-    0.004,                  # a0 default value 0.004
-    0.04,                   # amax default value 0.04
-    0.03,                   # b0
+    0.004,                  # a0
+    0.016,                   # amax
+    0.01,                   # b0            value for b in this problem
     25,                     # σn
-    0.14,                   # L or Dc 
+    0.50,                   # DRS
     1E-9,                   # Vp
-    1E-9,                   # Vinit initial value 1E-9, change it to 1E-3
+    1E-9,                    # VL
+    1E-9,                   # Vinit
     1E-6,                   # V0
     0.6,                    # f0
-    2,                      # hs
-    2,                      # ht
-    12,                     # H
-    60,                     # l
-    40,                     # Wf
-    100,                    # lf
-    12,                     # w
-    1000,                   # Δz
-    1800                    # tf
+    200,                    # RVW
+    400,                    # Wf
+    400,                    # lf
+    10,                     # Δz in meter, 
+    10,                     # tf
+    2,                      # Δτ0
+    150,                    # Rnuc
+    1,                      # T 
+    -50,                    # y2
+    -50                     # y3
 )
+
 
 
 include("Assembling_3D_matrices.jl")
