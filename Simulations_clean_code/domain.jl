@@ -39,9 +39,9 @@ BP7_coeff = coefficients(
 
 include("Assembling_3D_matrices.jl")
 
-# The entire domain is 128 km by 128 km by 128 km
-Lx = Ly = Lz = 128
-N_x = N_y = N_z = Int(128 / (BP7_coeff.Δz / 1000))
+# The entire domain is 1.28 km by 1.28 km by 1.28 km
+Lx = Ly = Lz = 1280
+N_x = N_y = N_z = Int(1280 / (BP7_coeff.Δz))
 Nx = N_x + 1
 Ny = N_y + 1
 Nz = N_z + 1
@@ -52,49 +52,77 @@ u2_filter_matrix = get_u2(Nx, Ny, Nz)
 u3_filter_matrix = get_u3(Nx, Ny, Nz)
 
 
-fN2 = BP7_coeff.lf / (BP7_coeff.Δz / 1000) + 1
+fN2 = 2 * BP7_coeff.lf / (BP7_coeff.Δz ) + 1
 fN2 = round(Int, fN2, RoundUp)
-fN3 = BP7_coeff.Wf / (BP7_coeff.Δz / 1000) + 1
+fN3 = 2 * BP7_coeff.Wf / (BP7_coeff.Δz ) + 1
 fN3 = round(Int, fN3, RoundUp)
 
 # fNy and fNz represents the indices of the fault region
-fNy_start = (Ly - BP7_coeff.lf) / (2 * BP7_coeff.Δz / 1000) + 1
+fNy_start = (Ly - 2 * BP7_coeff.lf) / (2 * BP7_coeff.Δz) + 1
 fNy_start = round(Int, fNy_start, RoundUp)
 fNy = (fNy_start, fNy_start + fN2 - 1)                    # y direction 
-fNz = (1, fN3)                   # z direction
+
+# fNz = (1, fN3)                   # z direction
+fNz_start = (Lz - 2 * BP7_coeff.Wf) / (2 * BP7_coeff.Δz) + 1
+fNz_start = round(Int, fNz_start, RoundUp)
+fNz = (fNz_start, fNz_start + fN3 - 1)
 
 # VW region of the RS
+function create_sparse_matrix(size, condition)
+    """
+    Creates a sparse matrix where elements satisfy the given condition.
 
-fN2_VW = BP7_coeff.l /(BP7_coeff.Δz / 1000) + 1
-fN2_VW = round(Int, fN2_VW, RoundUp)
-fN2_VW_favorable = BP7_coeff.w / (BP7_coeff.Δz / 1000) + 1
-fN2_VW_favorable = round(Int, fN2_VW_favorable, RoundUp)
-fN3_VW = BP7_coeff.H / (BP7_coeff.Δz / 1000) + 1
-fN3_VW = round(Int, fN3_VW, RoundUp)
+    Args:
+        size: A tuple representing the dimensions of the matrix (rows, columns).
+        condition: A function that takes two arguments (row index, column index) 
+                   and returns true if the element should be non-zero, false otherwise.
 
-# fNy_VW and fNz_VW represents the indices of the fault region
-fNy_VW_start = (Ly - BP7_coeff.l) / (2 * BP7_coeff.Δz / 1000) + 1
-fNy_VW_start = round(Int, fNy_VW_start, RoundUp)
-fNy_VW = (fNy_VW_start, fNy_VW_start + fN2_VW - 1)
-fNy_VW_favorable = (fNy_VW_start, fNy_VW_start + fN2_VW_favorable - 1)
-fNz_VW_start = round(Int, (BP7_coeff.hs + BP7_coeff.ht) / (BP7_coeff.Δz / 1000), RoundUp) + 1
-fNz_VW = (fNz_VW_start, fNz_VW_start + fN3_VW - 1)
+    Returns:
+        A sparse matrix with non-zero elements determined by the condition.
+    """
 
+    rows = Int[]
+    cols = Int[]
+    vals = Float64[]
 
-# VW-VS transition region
-fN2_VW_VS = (BP7_coeff.l + 2 * BP7_coeff.ht) / (BP7_coeff.Δz / 1000) + 1
-fN2_VW_VS = round(Int, fN2_VW_VS, RoundUp)
+    for i in 1:size[1]
+        for j in 1:size[2]
+            if condition(i, j)
+                push!(rows, i)
+                push!(cols, j)
+                # You can assign any value here, e.g., 1.0
+                push!(vals, 1.0) 
+            end
+        end
+    end
 
-fN3_VW_VS = (BP7_coeff.H + BP7_coeff.ht * 2) / (BP7_coeff.Δz / 1000) + 1
-fN3_VW_VS = round(Int, fN3_VW_VS, RoundUp)
+    sparse(rows, cols, vals, size[1], size[2])
+end
 
-fNy_VW_VS_start = (Ly- BP7_coeff.l - BP7_coeff.ht) / (2 * BP7_coeff.Δz / 1000) + 1
-fNy_VW_VS_start = round(Int, fNy_VW_VS_start, RoundUp)
-fNy_VW_VS = (fNy_VW_VS_start, fNy_VW_VS_start + fN2_VW_VS - 1)
-fNz_VW_VS_start = round(Int, BP7_coeff.hs / (BP7_coeff.Δz / 1000), RoundUp) + 1
-fNz_VW_VS = (fNz_VW_VS_start, fNz_VW_VS_start + fN3_VW_VS - 1)
+function within_VW(i, j, BP7_coeff, Ly, Lz)
+    y_coord = (i - 1) * BP7_coeff.Δz
+    z_coord = (j - 1) * BP7_coeff.Δz
+    y2 = Ly/2
+    y3 = Lz/2
+    return (y_coord - y2)^2 + (z_coord - y3)^2 <= BP7_coeff.RVW^2
+end
 
-# fNy_VW_VS and fNz_VW represents the indices of the fault region
+function get_VW_indices_2D(Ny, Nz, BP7_coeff)
+    matrix_size = (Ny, Nz)
+    condition(i,j) = within_VW(i, j, BP7_coeff, Ly, Lz)
+    sparse_matrix_2D = create_sparse_matrix(matrix_size, condition)
+    return sparse_matrix_2D[:]
+end
+
+function get_VW_indices(Nx, Ny, Nz, BP7_coeff)
+    idx = spzeros(Nx)
+    idx[1] = 1
+    matrix_size = (Ny, Nz)
+    condition(i,j) = within_VW(i, j, BP7_coeff, Ly, Lz)
+    sparse_matrix_2D = create_sparse_matrix(matrix_size, condition)
+    sparse_matrix_3D = kron(sparse_matrix_2D,idx)[:]
+    return sparse_matrix_3D
+end
 
 # Assembling matrices for 3D SBP-SAT
 SBPp = 2                # SBPp order
@@ -148,83 +176,47 @@ function get_RS_indices_2D(Ny, Nz, fNy, fNz)
     return kron(z_idx, y_idx)
 end
 
-function get_uniform_indices(Nx, Ny, Nz, fNy_VW, fNz_VW)
-    x_idx = spzeros(Nx)
-    y_idx = spzeros(Ny)
-    z_idx = spzeros(Nz)
-    x_idx[1] = 1 # the fault is on the first face
-    y_idx[fNy_VW[1]:fNy_VW[2]] .= 1
-    z_idx[fNz_VW[1]:fNz_VW[2]] .= 1
-    return kron(z_idx, y_idx, x_idx)
-end
-
-function get_uniform_indices_2D(Ny, Nz, fNy_VW, fNz_VW)
-    y_idx = spzeros(Ny)
-    z_idx = spzeros(Nz)
-    y_idx[fNy_VW[1]:fNy_VW[2]] .= 1
-    z_idx[fNz_VW[1]:fNz_VW[2]] .= 1
-    return kron(z_idx, y_idx)
-end
-
-
-function get_transition_indices(Nx, Ny, Nz, fNy_VW, fNz_VW, fNy_VW_VS, fNz_VW_VS)
-    x_idx = spzeros(Nx)
-    y_idx = spzeros(Ny)
-    z_idx = spzeros(Nz)
-    x_idx[1] = 1 # the fault is on the first face
-    y_idx[fNy_VW_VS[1]:fNy_VW_VS[2]] .= 1
-    z_idx[fNz_VW_VS[1]:fNz_VW_VS[2]] .= 1
-    # return kron(z_idx, y_idx, x_idx)
-    return kron(z_idx, y_idx, x_idx) - get_uniform_indices(Nx, Ny, Nz, fNy_VW, fNz_VW)
-end
-
-function get_favorable_indices(Nx, Ny, Nz, fNy_VW_favorable, fNz_VW)
-    x_idx = spzeros(Nx)
-    y_idx = spzeros(Ny)
-    z_idx = spzeros(Nz)
-    x_idx[1] = 1 # the fault is on the first face
-    y_idx[fNy_VW_favorable[1]:fNy_VW_favorable[2]] .= 1
-    z_idx[fNz_VW[1]:fNz_VW[2]] .= 1
-    return kron(z_idx, y_idx, x_idx)
-end
-
-function get_favorable_indices_2D(Ny, Nz, fNy_VW_favorable, fNz_VW)
-    y_idx = spzeros(Ny)
-    z_idx = spzeros(Nz)
-    y_idx[fNy_VW_favorable[1]:fNy_VW_favorable[2]] .= 1
-    z_idx[fNz_VW[1]:fNz_VW[2]] .= 1
-    return kron(z_idx, y_idx)
-end
-
-function get_favorable_indices_RS(fNy, fNz, fNy_VW_favorable, fNz_VW)
-    y_idx = spzeros(fNy[2] - fNy[1] + 1)
-    z_idx = spzeros(fNz[2] - fNz[1] + 1)
-    y_idx[fNy_VW_favorable[1] - fNy[1] + 1: fNy_VW_favorable[2] - fNy[1] + 1] .= 1
-    z_idx[fNz_VW[1]: fNz_VW[2]] .= 1
-    return kron(z_idx, y_idx)
-end
-
 
 
 RS_filter = get_RS_indices(Nx, Ny, Nz, fNy, fNz)
 RS_filter_nzind = RS_filter.nzind
 RS_filter_2D = get_RS_indices_2D(Ny, Nz, fNy, fNz)
 RS_filter_2D_nzind = RS_filter_2D.nzind
-VW_filter = get_uniform_indices(Nx, Ny, Nz, fNy_VW, fNz_VW)
-VW_filter_2D = get_uniform_indices_2D(Ny, Nz, fNy_VW, fNz_VW)
+
+
+VW_filter = get_VW_indices(Nx, Ny, Nz, BP7_coeff)
+VW_filter_nzind = VW_filter.nzind
+VW_filter_2D = get_VW_indices_2D(Ny, Nz, BP7_coeff)
 VW_filter_2D_nzind = VW_filter_2D.nzind
-VW_favorable_filter = get_favorable_indices(Nx, Ny, Nz, fNy_VW_favorable, fNz_VW)
-VW_favorable_filter_nzind = VW_favorable_filter.nzind
-VW_favorable_filter_2D = get_favorable_indices_2D(Ny, Nz, fNy_VW_favorable, fNz_VW)
-VW_favorable_filter_2D_nzind = VW_favorable_filter_2D.nzind
-VW_favorable_filter_RS = get_favorable_indices_RS(fNy, fNz, fNy_VW_favorable, fNz_VW)
-VW_favorable_filter_RS_nzind = VW_favorable_filter_RS.nzind
-VW_VS_transition_filter = get_transition_indices(Nx, Ny, Nz, fNy_VW, fNz_VW, fNy_VW_VS, fNz_VW_VS)
-VS_filter = RS_filter - VW_filter - VW_VS_transition_filter
 
+VS_filter_2D = RS_filter_2D - VW_filter_2D
+VS_filter = RS_filter - VW_filter
 
-@assert length(VW_filter.nzind) + length(VW_VS_transition_filter.nzind) + length(VS_filter.nzind) == fN2 * fN3
+function find_indices_in_array(A, B)
+    """
+    Finds the indices of all elements in array A within array B.
 
+    Args:
+        A: The array of elements to find.
+        B: The array to search within.
+
+    Returns:
+        An array of the same length as A, where each element is 
+        the index of the corresponding element in B, or 0 if 
+        the element is not found in B.
+    """
+
+    indices = zeros(Int, length(A))
+    for (i, a) in enumerate(A)
+        indices[i] = findfirst(==(a), B) 
+    end
+    return indices
+end
+
+VS_on_RS_filter = find_indices_in_array(VW_filter_2D_nzind, RS_filter_2D_nzind)
+
+@assert length(VW_filter.nzind) + length(VS_filter.nzind) == fN2 * fN3
+sparse(reshape(VS_filter_2D, Ny, Nz))
 
 
 
@@ -246,8 +238,8 @@ fltst = [
 function find_flt_indices(indices, lf, fN2)
     x2 = indices[2]
     x3 = indices[3]
-    j = Int(round((x2 - (-lf / 2)) / (BP7_coeff.Δz / 1000))) + 1 # starting with 1
-    k = Int(round((x3 - 0) / (BP7_coeff.Δz / 1000))) # starting with 0 (multiplied by fN2) no +1
+    j = Int(round((x2 - (-lf / 2)) / (BP7_coeff.Δz ))) + 1 # starting with 1
+    k = Int(round((x3 - 0) / (BP7_coeff.Δz ))) # starting with 0 (multiplied by fN2) no +1
     return j + k * fN2
 end
 

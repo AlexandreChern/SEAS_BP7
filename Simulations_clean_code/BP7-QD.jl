@@ -28,24 +28,31 @@ function main()
     θ = zeros(size(ψ))
 
     # TODO: rewrite this for BP7
-    for i in 1:fN2
-        for j in 1:fN3
-            index = i + (j - 1) * fN2
-            x2 = (i - 1) * BP7_coeff.Δz / 1000 - BP7_coeff.lf / 2
-            x3 = (j - 1) * BP7_coeff.Δz / 1000
-            RSas[index] = a_func(x2, x3, BP7_coeff)
-        end
-    end
+    RSas .= BP7_coeff.amax
+    RSas[VS_on_RS_filter] .= BP7_coeff.a0
 
     # initializing \boldsymbol{V} over the entire region
+    # for i in 1:Ny
+    #     for j in 1:Nz
+    #         index = i + (j - 1) * Ny
+    #         V[2*index-1] = BP7_coeff.VL
+    #         V[2*index] = Vzero
+    #     end
+    # end
+
+    # Outside of rate-and-state
+    # Initialize everywhere
     for i in 1:Ny
         for j in 1:Nz
             index = i + (j - 1) * Ny
-            V[2*index-1] = BP7_coeff.Vinit
-            V[2*index] = Vzero
+            V[2*index-1] = BP7_coeff.VL
+            V[2*index] = 0
         end
     end
 
+    # Inside of rate-and-state
+    V[2*RS_filter_2D_nzind .- 1] .= BP7_coeff.Vinit
+    V[2*RS_filter_2D_nzind] .= Vzero
 
 
     # initializing \boldsymbol{τ}^0 for the entire domain
@@ -54,6 +61,7 @@ function main()
     τz = @view τb[2:2:length(τb)]
 
     # only using \tau values for the RS zone
+
     for i in 1:fN2
         for j in 1:fN3
             index = i + (j - 1) * fN2
@@ -64,31 +72,43 @@ function main()
             τ[tau_index] = τ0 * BP7_coeff.Vinit / V_norm
             τz[tau_index] = τ0 * Vzero / V_norm
 
-            θ0 = BP7_coeff.L / BP7_coeff.V0 * exp(RSas[index] / BP7_coeff.b0 *
+            θ0 = BP7_coeff.DRS / BP7_coeff.V0 * exp(RSas[index] / BP7_coeff.b0 *
                                                   log(2 * BP7_coeff.V0 / BP7_coeff.Vinit * sinh((τ0 - η * BP7_coeff.Vinit) / (RSas[index] * BP7_coeff.σn)))
                                                   -
                                                   BP7_coeff.f0 / BP7_coeff.b0)
-            ψ0 = BP7_coeff.f0 + BP7_coeff.b0 * log(BP7_coeff.V0 * θ0 / BP7_coeff.L)
+            ψ0 = BP7_coeff.f0 + BP7_coeff.b0 * log(BP7_coeff.V0 * θ0 / BP7_coeff.DRS)
             ψ[index] = ψ0
             θ[index] = θ0
         end
     end
 
-
+    # Initialize r_v
     for i in 1:fN2
         for j in 1:fN3
             index = i + (j - 1) * fN2
-            tau_index = RS_filter_2D_nzind[index]
-            if index in VW_favorable_filter_RS_nzind
-                τ0 = BP7_coeff.σn * RSas[index] * asinh((0.03 / (2 * BP7_coeff.V0) *
-                                                         exp((BP7_coeff.f0 + BP7_coeff.b0 * log(BP7_coeff.V0 / BP7_coeff.Vinit)) /
-                                                             RSas[index])) + η * 0.03)
-                τ[tau_index] = τ0
-                V2_v[index] = 0.03
-                RSLs[index] = 0.13
-            end
+            # tau_index = RS_filter_2D_nzind[index]
+            y_coord = -BP7_coeff.lf + (i - 1) * BP7_coeff.Δz
+            z_coord = -BP7_coeff.Wf + (j - 1) * BP7_coeff.Δz
+            r_v[index] = hypot(y_coord - BP7_coeff.y2, z_coord - BP7_coeff.y3)
         end
     end
+
+
+
+    # for i in 1:fN2
+    #     for j in 1:fN3
+    #         index = i + (j - 1) * fN2
+    #         tau_index = RS_filter_2D_nzind[index]
+    #         if index in VW_favorable_filter_RS_nzind
+    #             τ0 = BP7_coeff.σn * RSas[index] * asinh((0.03 / (2 * BP7_coeff.V0) *
+    #                                                      exp((BP7_coeff.f0 + BP7_coeff.b0 * log(BP7_coeff.V0 / BP7_coeff.Vinit)) /
+    #                                                          RSas[index])) + η * 0.03)
+    #             τ[tau_index] = τ0
+    #             V2_v[index] = 0.03
+    #             RSLs[index] = 0.13
+    #         end
+    #     end
+    # end
   
 
 

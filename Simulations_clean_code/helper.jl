@@ -49,7 +49,7 @@ struct coefficients
     Δτ0     # max amplitude of nucleation stress perturbation   2 MPa 
     Rnuc    # radius of the nucleation stress perturbation      150 m
     T       # Duration of the nucleation stress perturbation    1s
-    y1      # hypocenter for nucleation stress perturbation    -50
+    y2      # hypocenter for nucleation stress perturbation    -50
     y3      # hypocenter for nucleation stress perturbation     -50
 end
 
@@ -108,12 +108,21 @@ end
 #         return BP7_coeff.a0 + r * (BP7_coeff.amax - BP7_coeff.a0)
 #     end
 # end
-function G1_func(x2, x3, BP7_coeff::coefficients)
-    r =  sqrt((x2 - BP7_coeff.y2)^2 + (x3 - BP7_coeff.y3)^2)
-    if r < BP7_coeff.Rnuc
+
+
+function G1_func(r, Rnuc)
+    if r < Rnuc
         return exp(r^2 / (r^2 - Rnuc^2))
     else
         return 0
+    end
+end
+
+function G2_func(t, T)
+    if t < T
+        return exp((t - T)^2 / (t*(t - 2 * T)))
+    else
+        return 1
     end
 end
 

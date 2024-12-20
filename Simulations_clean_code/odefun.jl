@@ -25,9 +25,10 @@ odeparam = (
     V2_v = fill(1e-9, fN2 * fN3),                   # acutal velocity (not in logical domain)
     V3_v = fill(1e-20, fN2 * fN3),                  # actual velocity (not in logical comain)
     V_v = fill(1e-9, fN2 * fN3),                    # norm of the velocity
-    τ2_v = fill(13.0, fN2 * fN3),                     # traction in the second direction for the RS region
-    τ3_v = fill(0.0, fN2 * fN3),                      # traction in the third direction for the RS region
-    τ_v = fill(13.0, fN2 * fN3),                      # norm of the traction
+    τ2_v = fill(13.0, fN2 * fN3),                   # traction in the second direction for the RS region
+    τ3_v = fill(0.0, fN2 * fN3),                    # traction in the third direction for the RS region
+    τ_v = fill(13.0, fN2 * fN3),                    # norm of the traction
+    r_v = fill(0.0, fN2 * fN3),
     counter = [],                                   # counter for slip with Vmax >= threshold
     RHS = RHS,                                      # RHS of the linear system
     μshear = BP7_coeff.cs^2 * BP7_coeff.ρ ,         # constant?
@@ -37,8 +38,8 @@ odeparam = (
     η = BP7_coeff.cs * BP7_coeff.ρ / (2 * 1000) ,   # bug? should be \mu /(2 * cs) 
     RSV0 = BP7_coeff.V0,                            # rate-and-state reference slip rate
     τ0 = zeros((N_x + 1) * (N_y + 1)),              # pre-stress                                     # 
-    RSL = BP7_coeff.L,                              # rate-and-state critical slip distance L
-    RSLs = fill(BP7_coeff.L, fN2 * fN3),            # rate-and-state critical slip distance Ls (0.13/0.14)
+    DRS = BP7_coeff.DRS,                              # rate-and-state critical slip distance L
+    DRSs = fill(BP7_coeff.DRS, fN2 * fN3),            # rate-and-state critical slip distance Ls (0.13/0.14)
     RSf0 = BP7_coeff.f0,                            # rate-and-state reference friction coefficient 
     N = N_x,                                        # number of grids in each direction, assuming idential of grid in x,y,z directions
     δNp = N_x + 1,                                  # number of grid points in each direction, assuming idential of grid in x,y,z directions
@@ -102,13 +103,21 @@ function odefun(dψV, ψδ, odeparam, t)
     u[:] .= Array(u_GPU)
     # End of solving 
 
+    # TODO make τb a time dependent function
+    # This involves calculating G1(r) and G2(t) usinng eqn 28 and 29 in SEAS BP7
+
+
     # updating values for traction
     Δτ = @view Δτb[1:2:length(Δτb)] 
     Δτz = @view Δτb[2:2:length(Δτb)]
 
-    τ0 = @view τb[1:2:length(τb)]
-    τz0 =  @view τb[2:2:length(τb)]
-
+    τ0 = @view τb[1:2:length(τb)] # Only this line needs to be changed
+    τz0 =  @view τb[2:2:length(τb)] # This one remains zero
+    if t == 0
+        τ0[RS_filter_2D_nzind] .= BP7_coeff.Δτ0   
+    else
+        τ0[RS_filter_2D_nzind] .= BP7_coeff.BP7_coeff.Δτ0 .* G1_func.(r_v, BP7_coeff.Rnuc) * G2_func(t, BP7_coeff.T)
+    end
     Δτ .= Face_operators[1] * sigma_21 * u
     Δτz .= Face_operators[1] * sigma_31 * u
     # finish updating values for traction
