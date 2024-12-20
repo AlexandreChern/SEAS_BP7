@@ -84,7 +84,7 @@ coefficients() = coefficients(
 # initial state variable over the entire fault
 # x2 
 function θ0_func(Nx, Ny, BP7_coeff::coefficients)
-    return fill(BP7_coeff.L / BP7_coeff.Vinit, Nx * Ny)
+    return fill(BP7_coeff.DRS / BP7_coeff.Vinit, Nx * Ny)
 end
 
 # for BP7, b is set to be the constant value b0
@@ -93,18 +93,18 @@ end
 
 function f_func(V, θ, a, b, BP7_coeff::coefficients)
     return a * asinh(
-        V / (2 * BP7_coeff.V0) * exp((BP7_coeff.f0 + b * ln(BP7_coeff.V0 / BP7_coeff.L)) / a) # is b the value b0 in coefficients?
+        V / (2 * BP7_coeff.V0) * exp((BP7_coeff.f0 + b * ln(BP7_coeff.V0 / BP7_coeff.DRS)) / a) # is b the value b0 in coefficients?
     )
 end
 
 # TODO BP7 is homogeneous and isotropic, a_func and a_func_region is replaced
 # function a_func(x2, x3, BP7_coeff::coefficients)
-#     if (BP7_coeff.hs + BP7_coeff.ht ≤ x3 ≤ BP7_coeff.hs + BP7_coeff.ht + BP7_coeff.H) && (abs(x2) ≤ BP7_coeff.l / 2)
+#     if (BP7_coeff.hs + BP7_coeff.ht ≤ x3 ≤ BP7_coeff.hs + BP7_coeff.ht + BP7_coeff.H) && (abs(x2) ≤ BP7_coeff.DRS / 2)
 #         return BP7_coeff.a0
-#     elseif (0 ≤ x3 ≤ BP7_coeff.hs) || (BP7_coeff.hs + 2 * BP7_coeff.ht + BP7_coeff.H ≤ x3 ≤ BP7_coeff.Wf) || (BP7_coeff.l / 2 + BP7_coeff.ht ≤ abs(x2) ≤ BP7_coeff.lf / 2)
+#     elseif (0 ≤ x3 ≤ BP7_coeff.hs) || (BP7_coeff.hs + 2 * BP7_coeff.ht + BP7_coeff.H ≤ x3 ≤ BP7_coeff.Wf) || (BP7_coeff.DRS / 2 + BP7_coeff.ht ≤ abs(x2) ≤ BP7_coeff.DRSf / 2)
 #         return BP7_coeff.amax
 #     else
-#         r = max(abs(x3 - BP7_coeff.hs - BP7_coeff.ht - BP7_coeff.H / 2) - BP7_coeff.H / 2, abs(x2) - BP7_coeff.l / 2) / BP7_coeff.ht
+#         r = max(abs(x3 - BP7_coeff.hs - BP7_coeff.ht - BP7_coeff.H / 2) - BP7_coeff.H / 2, abs(x2) - BP7_coeff.DRS / 2) / BP7_coeff.ht
 #         return BP7_coeff.a0 + r * (BP7_coeff.amax - BP7_coeff.a0)
 #     end
 # end
@@ -128,12 +128,12 @@ end
 
 # auxiliary function to determine which region a belongs to
 # function a_func_region(x2, x3, BP7_coeff::coefficients)
-#     if (BP7_coeff.hs + BP7_coeff.ht ≤ x3 ≤ BP7_coeff.hs + BP7_coeff.ht + BP7_coeff.H) && (abs(x2) ≤ BP7_coeff.l / 2)
+#     if (BP7_coeff.hs + BP7_coeff.ht ≤ x3 ≤ BP7_coeff.hs + BP7_coeff.ht + BP7_coeff.H) && (abs(x2) ≤ BP7_coeff.DRS / 2)
 #         return 0
-#     elseif (0 ≤ x3 ≤ BP7_coeff.hs) || (BP7_coeff.hs + 2 * BP7_coeff.ht + BP7_coeff.H ≤ x3 ≤ BP7_coeff.Wf) || (BP7_coeff.l / 2 + BP7_coeff.ht ≤ abs(x2) ≤ BP7_coeff.lf / 2)
+#     elseif (0 ≤ x3 ≤ BP7_coeff.hs) || (BP7_coeff.hs + 2 * BP7_coeff.ht + BP7_coeff.H ≤ x3 ≤ BP7_coeff.Wf) || (BP7_coeff.DRS / 2 + BP7_coeff.ht ≤ abs(x2) ≤ BP7_coeff.DRSf / 2)
 #         return 2
 #     else
-#         r = max(abs(x3 - BP7_coeff.hs - BP7_coeff.ht - BP7_coeff.H / 2) - BP7_coeff.H / 2, abs(x2) - BP7_coeff.l / 2) / BP7_coeff.ht
+#         r = max(abs(x3 - BP7_coeff.hs - BP7_coeff.ht - BP7_coeff.H / 2) - BP7_coeff.H / 2, abs(x2) - BP7_coeff.DRS / 2) / BP7_coeff.ht
 #         return 1
 #     end
 # end
@@ -156,12 +156,12 @@ end
 
 # quasi-static process zone
 function Λ0_func(C, b, μ, BP7_coeff::coefficients)
-    return C * μ * BP7_coeff.L / (b * BP7_coeff.σn)
+    return C * μ * BP7_coeff.DRS / (b * BP7_coeff.σn)
 end
 
 # nucleation zone
 function h_func(a, b, μ, BP7_coeff::coefficients)
-    return π / 2 * (μ * b * BP7_coeff.L) / ((b - a)^2 * BP7_coeff.σn)^2
+    return π / 2 * (μ * b * BP7_coeff.DRS) / ((b - a)^2 * BP7_coeff.σn)^2
 end
 
 # fault strength
@@ -484,7 +484,7 @@ function write_to_file(path, ψδ, t, i, odeparam, station_strings, station_indi
                 ww[5] = log10(V3_real)
                 ww[6] = τfb[2 * RS_index - 1] # need to define this
                 ww[7] = τfb[2 * RS_index]
-                θ = BP7_coeff.L / BP7_coeff.V0 * exp((ψ[station_indices[n]] - BP7_coeff.f0)/BP7_coeff.b0)
+                θ = BP7_coeff.DRS / BP7_coeff.V0 * exp((ψ[station_indices[n]] - BP7_coeff.f0)/BP7_coeff.b0)
                 ww[8] = log10(θ)
                 open(XXX, "a") do io
                     writedlm(io, ww)
