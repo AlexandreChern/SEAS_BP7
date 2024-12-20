@@ -116,7 +116,7 @@ function odefun(dψV, ψδ, odeparam, t)
     if t == 0
         τ0[RS_filter_2D_nzind] .= BP7_coeff.Δτ0   
     else
-        τ0[RS_filter_2D_nzind] .= BP7_coeff.BP7_coeff.Δτ0 .* G1_func.(r_v, BP7_coeff.Rnuc) * G2_func(t, BP7_coeff.T)
+        τ0[RS_filter_2D_nzind] .= BP7_coeff.Δτ0 .* G1_func.(r_v, BP7_coeff.Rnuc) * G2_func(t, BP7_coeff.T)
     end
     Δτ .= Face_operators[1] * sigma_21 * u
     Δτz .= Face_operators[1] * sigma_31 * u
@@ -178,7 +178,7 @@ function odefun(dψV, ψδ, odeparam, t)
     # dψ[n] = (RSb * RSV0 / RSDc) * (exp((RSf0 - ψn) / RSb) - abs(Vn) / RSV0) # BP1
     # dψ .= (RSb * RSV0 / RSL) .* (exp.((RSf0 .- ψ) ./ RSb) .- sqrt.(V2_v.^2 .+ V3_v.^2) ./ RSV0)
     if iter > 0
-        dψ .= (RSb * RSV0 ./ RSLs) .* (exp.((RSf0 .- ψ) ./ RSb) .- sqrt.(V2_v.^2 .+ V3_v.^2) ./ RSV0)
+        dψ .= (RSb * RSV0 ./ DRSs) .* (exp.((RSf0 .- ψ) ./ RSb) .- sqrt.(V2_v.^2 .+ V3_v.^2) ./ RSV0)
     else
         dψ .= 0
     end
