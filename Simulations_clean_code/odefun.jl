@@ -21,7 +21,8 @@ odeparam = (
     u_GPU = CuArray(zeros(size(RHS))),              # GPU array for solutions
     Δτb = spzeros(2 * (N_x + 1) * (N_y + 1)),       # store the traction computed
     τb = spzeros(2 * (N_x + 1) * (N_y + 1)),        # shear stress vector \boldsymbol{τ} = [τ; τ_z]
-    τfb = spzeros(2 * (N_x + 1) * (N_y + 1)),
+    Δτ0b = spzeros(2 * (N_x + 1) * (N_y + 1)), 
+    τfb = spzeros(2 * (N_x + 1) * (N_y + 1)),       
     V2_v = fill(1e-9, fN2 * fN3),                   # acutal velocity (not in logical domain)
     V3_v = fill(1e-20, fN2 * fN3),                  # actual velocity (not in logical comain)
     V_v = fill(1e-9, fN2 * fN3),                    # norm of the velocity
@@ -105,6 +106,7 @@ function odefun(dψV, ψδ, odeparam, t)
 
     # TODO make τb a time dependent function
     # This involves calculating G1(r) and G2(t) usinng eqn 28 and 29 in SEAS BP7
+    # implemented it in Line 117 to 121 
 
 
     # updating values for traction
@@ -113,20 +115,22 @@ function odefun(dψV, ψδ, odeparam, t)
 
     τ0 = @view τb[1:2:length(τb)] # Only this line needs to be changed
     τz0 =  @view τb[2:2:length(τb)] # This one remains zero
+
+    Δτ0 = @view Δτ0b[1:2:length(Δτ0b)]
     if t == 0
-        τ0[RS_filter_2D_nzind] .= BP7_coeff.Δτ0   
+        Δτ0[RS_filter_2D_nzind] .= BP7_coeff.Δτ0   
     else
-        τ0[RS_filter_2D_nzind] .= BP7_coeff.Δτ0 .* G1_func.(r_v, BP7_coeff.Rnuc) * G2_func(t, BP7_coeff.T)
+        Δτ0[RS_filter_2D_nzind] .= BP7_coeff.Δτ0 .* G1_func.(r_v, BP7_coeff.Rnuc) * G2_func(t, BP7_coeff.T) # not += 
     end
     Δτ .= Face_operators[1] * sigma_21 * u
     Δτz .= Face_operators[1] * sigma_31 * u
     # finish updating values for traction
     
-    odeparam.τfb .= τb .+ Δτb 
+    odeparam.τfb .= τb .+ Δτ0b .+ Δτb 
 
     # getting tractions for the RS region
-    τ2_v .= (τ0 + Δτ)[RS_filter_2D_nzind]
-    τ3_v .= (τz0 + Δτz)[RS_filter_2D_nzind]
+    τ2_v .= (τ0 .+ Δτ0 .+ Δτ)[RS_filter_2D_nzind]
+    τ3_v .= (τz0 .+ Δτ0 .+ Δτz)[RS_filter_2D_nzind]
     τ_v .= hypot.(τ2_v, τ3_v)
     # end of getting tractions for the RS region
 

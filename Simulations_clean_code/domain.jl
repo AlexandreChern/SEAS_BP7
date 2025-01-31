@@ -2,7 +2,7 @@
 using Dates
 include("helper.jl")
 const year_seconds = 31556926
-sim_years = 1800
+sim_years = 10
 
 # calling parameterized constructor to set values for BP7
 # if BP7_coeff is not defined here, the BP7-QD.jl will 
@@ -39,13 +39,13 @@ BP7_coeff = coefficients(
 
 include("Assembling_3D_matrices.jl")
 
-# The entire domain is 1.28 km by 1.28 km by 1.28 km
-Lx = Ly = Lz = 1280
-N_x = N_y = N_z = Int(1280 / (BP7_coeff.Δz))
+# The entire domain is 1 km by 1 km by 1 km
+Lx = Ly = Lz = 1000
+N_x = N_y = N_z = Int(Lx / (BP7_coeff.Δz))
 Nx = N_x + 1
 Ny = N_y + 1
 Nz = N_z + 1
-n_levels = Int(log(2, N_x))
+# n_levels = Int(log(2, N_x))
 
 u1_filter_matrix = get_u1(Nx, Ny, Nz)
 u2_filter_matrix = get_u2(Nx, Ny, Nz)
@@ -223,32 +223,48 @@ sparse(reshape(VS_filter_2D, Ny, Nz))
 # Time series
 # On-Fault series
 fltst = [
-    [0, -36, 0],
-    [0, -16, 0],
     [0, 0, 0],
-    [0, 16, 0],
-    [0, 36, 0],
-    [0, -24, 10],
-    [0, -16, 10],
-    [0, 0, 10],
-    [0, 16, 10],
-    [0, 0, 22]
+    [0, -100, 0],
+    [0, 0, 100],
+    [0, 100, 0],
+    [0, 0, -100],
+    [0, -100, -100],
+    [0, -100, 100],
+    [0, 100, -100],
+    [0, 100, 100],
+    [0, -300, 0],
+    [0, 0, 300],
+    [0, 300, 0],
+    [0, 0, -300]
 ]
 
-function find_flt_indices(indices, lf, fN2)
+function find_flt_indices(indices, lf, Wf, fN2)
     x2 = indices[2]
     x3 = indices[3]
-    j = Int(round((x2 - (-lf / 2)) / (BP7_coeff.Δz ))) + 1 # starting with 1
-    k = Int(round((x3 - 0) / (BP7_coeff.Δz ))) # starting with 0 (multiplied by fN2) no +1
+    j = Int(round((x2 - (-lf)) / (BP7_coeff.Δz ))) + 1 # starting with 1
+    k = Int(round((x3 - (-Wf)) / (BP7_coeff.Δz ))) # starting with 0 (multiplied by fN2) no +1
     return j + k * fN2
 end
 
 # time_string = Dates.format(now(),"yyyymmddHHMM")
 # path="./output/$time_string/"
 path="./output"
-station_indices = find_flt_indices.(fltst,BP7_coeff.lf, fN2)
-station_strings = ["-36dp+00", "-16dp+00", "+00dp+00", "+16dp+00", "+36dp+00",
-                    "-24dp+10", "-16dp+10", "+00dp+10","+16dp+10",
-                    "+00dp+22"]
+station_indices = find_flt_indices.(fltst,BP7_coeff.lf, BP7_coeff.Wf, fN2)
+# station_strings = ["-36dp+00", "-16dp+00", "+00dp+00", "+16dp+00", "+36dp+00",
+#                     "-24dp+10", "-16dp+10", "+00dp+10","+16dp+10",
+#                     "+00dp+22"]
+station_strings = ["+000dp+000",
+                "-100dp+000",
+                "+000dp+100",
+                "+100dp+000",
+                "+000dp-000",
+                "-100dp-100",
+                "-100dp+100",
+                "+100dp-100",
+                "+100dp+100",
+                "-300dp+000",
+                "+000dp+300",
+                "+300dp+000",
+                "+000dp-300"]
 
 nothing # avoid printing out results 

@@ -5,7 +5,7 @@ domain_file = "domain.jl"
 include(domain_file)
 
 # loading odefun defined for ODEProblem
-include("utils_MG.jl")
+# include("utils_MG.jl")
 include("odefun.jl")
 
 
@@ -68,14 +68,11 @@ function main()
             tau_index = RS_filter_2D_nzind[index]
             τ0 = BP7_coeff.σn * RSas[index] * asinh((BP7_coeff.Vinit / (2 * BP7_coeff.V0) *
                                                      exp((BP7_coeff.f0 + BP7_coeff.b0 * log(BP7_coeff.V0 / BP7_coeff.Vinit)) /
-                                                         RSas[index])) + η * BP7_coeff.Vinit)
+                                                         RSas[index]))) + η * BP7_coeff.Vinit
             τ[tau_index] = τ0 * BP7_coeff.Vinit / V_norm
             τz[tau_index] = τ0 * Vzero / V_norm
 
-            θ0 = BP7_coeff.DRS / BP7_coeff.V0 * exp(RSas[index] / BP7_coeff.b0 *
-                                                  log(2 * BP7_coeff.V0 / BP7_coeff.Vinit * sinh((τ0 - η * BP7_coeff.Vinit) / (RSas[index] * BP7_coeff.σn)))
-                                                  -
-                                                  BP7_coeff.f0 / BP7_coeff.b0)
+            θ0 = BP7_coeff.DRS / BP7_coeff.V0 
             ψ0 = BP7_coeff.f0 + BP7_coeff.b0 * log(BP7_coeff.V0 * θ0 / BP7_coeff.DRS)
             ψ[index] = ψ0
             θ[index] = θ0
