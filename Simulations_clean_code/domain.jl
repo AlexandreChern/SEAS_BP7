@@ -17,7 +17,7 @@ BP7_coeff = coefficients(
     0.016,                   # amax
     0.01,                   # b0            value for b in this problem
     25,                     # σn
-    0.50,                   # DRS
+    0.0005,                   # DRS
     1E-9,                   # Vp
     1E-9,                    # VL
     1E-9,                   # Vinit

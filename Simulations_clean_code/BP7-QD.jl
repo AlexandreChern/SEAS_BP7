@@ -72,7 +72,7 @@ function main()
             τ[tau_index] = τ0 * BP7_coeff.Vinit / V_norm
             τz[tau_index] = τ0 * Vzero / V_norm
 
-            θ0 = BP7_coeff.DRS / BP7_coeff.V0 
+            θ0 = BP7_coeff.DRS / BP7_coeff.Vinit 
             ψ0 = BP7_coeff.f0 + BP7_coeff.b0 * log(BP7_coeff.V0 * θ0 / BP7_coeff.DRS)
             ψ[index] = ψ0
             θ[index] = θ0

@@ -452,7 +452,7 @@ function create_text_files(path, station_strings, station_indices, δ, τb, θ, 
             write(io, "# Column #6 = Shear_stress_2 (MPa)\n")
             write(io, "# Column #7 = Shear_stress_3 (MPa)\n")
             write(io, "# Column #8 = State (log10 s)\n")
-            write(io, "t slip_2 slip_3 slip_rate_2 slip_rate_3 shear_stress_2 shear_stress_3 state\n")
+            write(io, "t\t slip_2\t slip_3\t slip_rate_2\t slip_rate_3\t shear_stress_2\t shear_stress_3\t state\n")
             write(io, "# Here is the time-series data.\n")
             writedlm(io, ww)
         end

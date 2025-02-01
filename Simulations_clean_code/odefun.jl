@@ -122,6 +122,9 @@ function odefun(dψV, ψδ, odeparam, t)
     else
         Δτ0[RS_filter_2D_nzind] .= BP7_coeff.Δτ0 .* G1_func.(r_v, BP7_coeff.Rnuc) * G2_func(t, BP7_coeff.T) # not += 
     end
+
+    # TODO 
+    # check if r_v is updated correctly
     Δτ .= Face_operators[1] * sigma_21 * u
     Δτz .= Face_operators[1] * sigma_31 * u
     # finish updating values for traction
@@ -182,7 +185,7 @@ function odefun(dψV, ψδ, odeparam, t)
     # dψ[n] = (RSb * RSV0 / RSDc) * (exp((RSf0 - ψn) / RSb) - abs(Vn) / RSV0) # BP1
     # dψ .= (RSb * RSV0 / RSL) .* (exp.((RSf0 .- ψ) ./ RSb) .- sqrt.(V2_v.^2 .+ V3_v.^2) ./ RSV0)
     if iter > 0
-        dψ .= (RSb * RSV0 ./ DRSs) .* (exp.((RSf0 .- ψ) ./ RSb) .- sqrt.(V2_v.^2 .+ V3_v.^2) ./ RSV0)
+        dψ .= (RSb * RSV0 ./ DRSs) .* (exp.((RSf0 .- ψ) ./ RSb) .- sqrt.(V2_v.^2 .+ V3_v.^2) ./ RSV0) # DRSs unit is mm, so 0.001
     else
         dψ .= 0
     end
