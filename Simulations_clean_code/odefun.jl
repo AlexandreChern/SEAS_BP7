@@ -126,8 +126,8 @@ function odefun(dψV, ψδ, odeparam, t)
 
     # TODO 
     # check if r_v is updated correctly
-    Δτ .= Face_operators[1] * sigma_21 * u
-    Δτz .= Face_operators[1] * sigma_31 * u
+    Δτ .= Face_operators[1] * sigma_21 * u * 1000 # GPa to MPa
+    Δτz .= Face_operators[1] * sigma_31 * u * 1000
     # finish updating values for traction
     
     odeparam.τfb .= τb .+ Δτ0b .+ Δτb 
