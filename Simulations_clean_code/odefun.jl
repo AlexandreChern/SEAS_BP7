@@ -9,7 +9,7 @@ include("helper.jl")
 
 global const ctr = Ref{Int64}(1)
 
-initialize_mg_struct_CUDA(mg_struct_CUDA, N_x, N_y, N_z, n_levels)
+# initialize_mg_struct_CUDA(mg_struct_CUDA, N_x, N_y, N_z, n_levels)
 
 odeparam = (
     reject_step = [false],                          # to reject a step or not
@@ -40,7 +40,7 @@ odeparam = (
     RSV0 = BP7_coeff.V0,                            # rate-and-state reference slip rate
     τ0 = zeros((N_x + 1) * (N_y + 1)),              # pre-stress                                     # 
     DRS = BP7_coeff.DRS,                              # rate-and-state critical slip distance L
-    DRSs = fill(BP7_coeff.DRS, fN2 * fN3),            # rate-and-state critical slip distance Ls (0.13/0.14)
+    DRSs = fill(BP7_coeff.DRS, fN2 * fN3),            # rate-and-state critical slip distance Ls (0.50mm/0.53mm)
     RSf0 = BP7_coeff.f0,                            # rate-and-state reference friction coefficient 
     N = N_x,                                        # number of grids in each direction, assuming idential of grid in x,y,z directions
     δNp = N_x + 1,                                  # number of grid points in each direction, assuming idential of grid in x,y,z directions
@@ -49,7 +49,7 @@ odeparam = (
     u_filters,                                      # filtering u1, u2, u3 from stacked u
     stride_time = 5,                                 # 
     RSas = zeros(fN2 * fN3),                         # RSas
-    mg_struct_CUDA = mg_struct_CUDA
+    # mg_struct_CUDA = mg_struct_CUDA
 );
 
 
@@ -118,9 +118,10 @@ function odefun(dψV, ψδ, odeparam, t)
 
     Δτ0 = @view Δτ0b[1:2:length(Δτ0b)]
     if t == 0
-        Δτ0[RS_filter_2D_nzind] .= BP7_coeff.Δτ0   
+        Δτ0[RS_filter_2D_nzind] .= 0   
     else
-        Δτ0[RS_filter_2D_nzind] .= BP7_coeff.Δτ0 .* G1_func.(r_v, BP7_coeff.Rnuc) * G2_func(t, BP7_coeff.T) # not += 
+        Δτ0[RS_filter_2D_nzind] .= BP7_coeff.Δτ0 .* G1_func.(r_v, BP7_coeff.Rnuc) * G2_func(t, BP7_coeff.T) # not +=
+        # Check this part, VW_filter_2D_nzind? 
     end
 
     # TODO 
@@ -133,7 +134,7 @@ function odefun(dψV, ψδ, odeparam, t)
 
     # getting tractions for the RS region
     τ2_v .= (τ0 .+ Δτ0 .+ Δτ)[RS_filter_2D_nzind]
-    τ3_v .= (τz0 .+ Δτ0 .+ Δτz)[RS_filter_2D_nzind]
+    τ3_v .= (τz0 .+ Δτz)[RS_filter_2D_nzind]
     τ_v .= hypot.(τ2_v, τ3_v)
     # end of getting tractions for the RS region
 
@@ -147,8 +148,12 @@ function odefun(dψV, ψδ, odeparam, t)
 
     # calculating V2_v and V3_v from V_v
     V_v .= V_v_tmp
+    
     V2_v = V_v .* τ2_v ./ τ_v
     V3_v = V_v .* τ3_v ./ τ_v
+
+    # if setting V3_v = 0
+    # V2_v = V_v
     # end of calculating V2_v and V3_v from V_v
 
     

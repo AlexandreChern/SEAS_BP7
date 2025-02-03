@@ -29,7 +29,7 @@ function main()
 
     # TODO: rewrite this for BP7
     RSas .= BP7_coeff.amax
-    RSas[VS_on_RS_filter] .= BP7_coeff.a0
+    RSas[VW_on_RS_filter] .= BP7_coeff.a0
 
     # initializing \boldsymbol{V} over the entire region
     # for i in 1:Ny
@@ -160,7 +160,7 @@ function main()
     # sol = solve(prob, Tsit5(); isoutofdomain=stepcheck, dt=0.001, dtmin=1e-8, abstol=1e-6, reltol=1e-8, gamma = 0.8, save_everystep=false,
     #     callback=callback_func) 
 
-    sol = solve(prob, Tsit5(); isoutofdomain=stepcheck, dt=0.001, dtmin=1e-8, abstol=1e-8, reltol=1e-10, save_everystep=false,
+    sol = solve(prob, Tsit5(); isoutofdomain=stepcheck, dt=0.001, dtmin=1e-10, abstol=1e-8, reltol=1e-10, save_everystep=false,
         callback=callback_func) 
 end
 

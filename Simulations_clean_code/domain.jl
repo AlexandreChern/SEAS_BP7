@@ -28,7 +28,7 @@ BP7_coeff = coefficients(
     400,                    # lf
     10,                     # Δz in meter, 
     10,                     # tf
-    2,                      # Δτ0
+    1.75,                      # Δτ0
     150,                    # Rnuc
     1,                      # T 
     -50,                    # y2
@@ -213,7 +213,7 @@ function find_indices_in_array(A, B)
     return indices
 end
 
-VS_on_RS_filter = find_indices_in_array(VW_filter_2D_nzind, RS_filter_2D_nzind)
+VW_on_RS_filter = find_indices_in_array(VW_filter_2D_nzind, RS_filter_2D_nzind)
 
 @assert length(VW_filter.nzind) + length(VS_filter.nzind) == fN2 * fN3
 sparse(reshape(VS_filter_2D, Ny, Nz))
