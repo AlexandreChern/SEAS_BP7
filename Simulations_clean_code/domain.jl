@@ -17,7 +17,7 @@ BP7_coeff = coefficients(
     0.016,                   # amax
     0.01,                   # b0            value for b in this problem
     25,                     # σn
-    0.0005,                   # DRS
+    0.00053,                   # DRS
     1E-9,                   # Vp
     1E-9,                    # VL
     1E-9,                   # Vinit
@@ -107,6 +107,9 @@ function within_VW(i, j, BP7_coeff, Ly, Lz)
     return (y_coord - y2)^2 + (z_coord - y3)^2 <= BP7_coeff.RVW^2
 end
 
+
+
+
 function get_VW_indices_2D(Ny, Nz, BP7_coeff)
     matrix_size = (Ny, Nz)
     condition(i,j) = within_VW(i, j, BP7_coeff, Ly, Lz)
@@ -123,6 +126,23 @@ function get_VW_indices(Nx, Ny, Nz, BP7_coeff)
     sparse_matrix_3D = kron(sparse_matrix_2D,idx)[:]
     return sparse_matrix_3D
 end
+
+
+function within_A(i, j, BP7_coeff, Ly, Lz)
+    y_coord = (i - 1) * BP7_coeff.Δz
+    z_coord = (j - 1) * BP7_coeff.Δz
+    y2 = Ly/2
+    y3 = Lz/2
+    return (y_coord - y2)^2 + (z_coord - y3)^2 <= (1.5 * BP7_coeff.RVW)^2 
+end
+
+function get_A_indices_2D(Ny, Nz, BP7_coeff)
+    matrix_size = (Ny, Nz)
+    condition(i,j) = within_A(i, j, BP7_coeff, Ly, Lz)
+    sparse_matrix_2D = create_sparse_matrix(matrix_size, condition)
+    return sparse_matrix_2D[:]
+end
+
 
 # Assembling matrices for 3D SBP-SAT
 SBPp = 2                # SBPp order
@@ -192,6 +212,10 @@ VW_filter_2D_nzind = VW_filter_2D.nzind
 VS_filter_2D = RS_filter_2D - VW_filter_2D
 VS_filter = RS_filter - VW_filter
 
+# Get patched VW for moment output
+A_filter_2D = get_A_indices_2D(Ny, Nz, BP7_coeff)
+A_filter_2D_nzind = A_filter_2D.nzind
+
 function find_indices_in_array(A, B)
     """
     Finds the indices of all elements in array A within array B.
@@ -214,10 +238,10 @@ function find_indices_in_array(A, B)
 end
 
 VW_on_RS_filter = find_indices_in_array(VW_filter_2D_nzind, RS_filter_2D_nzind)
+A_on_RS_filter = find_indices_in_array(A_filter_2D_nzind, RS_filter_2D_nzind)
 
 @assert length(VW_filter.nzind) + length(VS_filter.nzind) == fN2 * fN3
 sparse(reshape(VS_filter_2D, Ny, Nz))
-
 
 
 # Time series
@@ -257,7 +281,7 @@ station_strings = ["+000dp+000",
                 "-100dp+000",
                 "+000dp+100",
                 "+100dp+000",
-                "+000dp-000",
+                "+000dp-100",
                 "-100dp-100",
                 "-100dp+100",
                 "+100dp-100",

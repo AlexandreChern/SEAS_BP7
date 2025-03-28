@@ -267,7 +267,9 @@ function newtbndv_vectorized(rateandstate_vectorized, xL, xR, V_v, ψ, σn, τ_v
     fR_v = rateandstate_vectorized(xR, ψ, σn, τ_v, η, RSas, RSV0)[1]
 
     if any(x -> x > 0, fL_v .* fR_v)
-        return (fill(typeof(V_v)(NaN), length(V_v)), fill(typeof(V_v)(NaN), length(V_v)), -maxiter)
+        # return (fill(typeof(V_v)(NaN), length(V_v)), fill(typeof(V_v)(NaN), length(V_v)), -maxiter)
+        return (fill(NaN, length(V_v)), fill(NaN, length(V_v)), -maxiter)
+        # typeof(V_v)(NaN) no longer supported in Julia
     end
 
     f_v = rateandstate_vectorized(V_v, ψ, σn, τ_v, η, RSas, RSV0)[1]
@@ -434,10 +436,10 @@ function create_text_files(path, station_strings, station_indices, δ, τb, θ, 
         ww[7] = τb[2 * RS_index]
         ww[8] = log10(θ[station_indices[n]])  # 
         open(XXX, "w") do io
-            write(io, "# This is the file header")
+            write(io, "# This is the file header\n")
             write(io, "# problem=SEAS Benchmark BP7-QD\n")  # 
             write(io, "# code=Thrase\n")
-            write(io, "# modeler=B. A. Erickson\n")
+            write(io, "# modeler=A. Chen, B. A. Erickson\n")
             write(io, "# date=2023/01/09\n")
             write(io, "# element size=1000 m\n")
             write(io, "#location=on fault, 0km along strike, 8km away from the fault, 0km depth")
@@ -458,6 +460,41 @@ function create_text_files(path, station_strings, station_indices, δ, τb, θ, 
         end
     end
 
+    open(path * "global.dat","w") do io
+        write(io, "# This is the file header: \n")
+        write(io, "# problem=SEAS Benchmark BP7-QD-A\n")
+        write(io, "# code=Thrase\n")
+        write(io, "# modeler = A. Chen, B. A. Erickson\n")
+        write(io, "# date=$(Dates.format(now(), "yyyymmdd"))\n")
+        write(io, "# element_size = 10 m\n")
+        write(io, "# location = 1.5 times VW patch radius\n")
+        write(io, "# minimum_time_step=1e-10\n")
+        write(io, "# maximum_time_step=undef\n")
+        write(io, "# num_time_steps=undef\n")
+        write(io, "# Column #1 = Time (s)\n")
+        write(io, "# Column #2 = Max_slip_rate (log10 m/s)\n")
+        write(io, "# Column #3 = Moment_rate (N-m/s) \n")
+        write(io, "# Column #4 = Moment_rate of VW patch (N-m/s)\n")
+        write(io, "# The line below lists the names of the data fields")
+        write(io, "t\t max_slip\t moment_rate\t moment_rate_vw\n")
+        write(io, "# Here is the time-seris data.")
+        ww = Array{Float64}(undef, 1, 4)
+        ww[1] = t
+        V2_A = V[2 * A_filter_2D_nzind - 1]
+        V3_A = V[2 * A_filter_2D]
+
+        V_A = hypot.(V2_A, V3_A)
+
+        V2_VW = V[2 * VW_filter_2D_nzind - 1]
+        V3_VW = V[2 * VW_filter_2D_nzind]
+
+        V_VW = hypot.(V2_VW, V3_VW)
+
+        ww[2] = maximum(V_A)
+        ww[3] = mean(V_A) * π * (1.5 * BP7_coeff.RVW)^2 * BP7_coeff.μ * 10^9
+        ww[3] = mean(V_VW) * π * (BP7_coeff.RVW) ^ 2 * BP7_coeff.μ * 10^9
+        write(io, ww)
+    end
 end
 
 
@@ -489,6 +526,25 @@ function write_to_file(path, ψδ, t, i, odeparam, station_strings, station_indi
                 open(XXX, "a") do io
                     writedlm(io, ww)
                 end
+            end
+
+            open(path * "global.dat", "a") do io 
+                ww = Array{Float64}(undef, 1, 4)
+                ww[1] = t
+                V2_A = V[2 * A_filter_2D_nzind - 1]
+                V3_A = V[2 * A_filter_2D]
+        
+                V_A = hypot.(V2_A, V3_A)
+        
+                V2_VW = V[2 * VW_filter_2D_nzind - 1]
+                V3_VW = V[2 * VW_filter_2D_nzind]
+        
+                V_VW = hypot.(V2_VW, V3_VW)
+        
+                ww[2] = maximum(V_A)
+                ww[3] = mean(V_A) * π * (1.5 * BP7_coeff.RVW)^2 * BP7_coeff.μ * 10^9
+                ww[3] = mean(V_VW) * π * (BP7_coeff.RVW) ^ 2 * BP7_coeff.μ * 10^9
+                write(io, ww)
             end
         end
         if mod(ctr[], 1000) == 0
