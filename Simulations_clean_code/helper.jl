@@ -460,6 +460,25 @@ function create_text_files(path, station_strings, station_indices, δ, τb, θ, 
         end
     end
 
+    ww = Array{Float64}(undef, 1, 4)
+    ww[1] = t
+    # V2_A = V[2 * A_filter_2D_nzind - 1]
+    # V3_A = V[2 * A_filter_2D]
+
+    # V_A = hypot.(V2_A, V3_A)
+
+    # V2_VW = V[2 * VW_filter_2D_nzind - 1]
+    # V3_VW = V[2 * VW_filter_2D_nzind]
+
+    # V_VW = hypot.(V2_VW, V3_VW)
+
+    # ww[2] = maximum(V_A)
+    # ww[3] = mean(V_A) * π * (1.5 * BP7_coeff.RVW)^2 * BP7_coeff.μ * 10^9
+    # ww[3] = mean(V_VW) * π * (BP7_coeff.RVW) ^ 2 * BP7_coeff.μ * 10^9
+    ww[2] = -2.0000000E0
+    ww[3] = 1.0124054E13
+    ww[4] = 1.0124054E13
+        
     open(path * "global.dat","w") do io
         write(io, "# This is the file header: \n")
         write(io, "# problem=SEAS Benchmark BP7-QD-A\n")
@@ -477,23 +496,8 @@ function create_text_files(path, station_strings, station_indices, δ, τb, θ, 
         write(io, "# Column #4 = Moment_rate of VW patch (N-m/s)\n")
         write(io, "# The line below lists the names of the data fields")
         write(io, "t\t max_slip\t moment_rate\t moment_rate_vw\n")
-        write(io, "# Here is the time-seris data.")
-        ww = Array{Float64}(undef, 1, 4)
-        ww[1] = t
-        V2_A = V[2 * A_filter_2D_nzind - 1]
-        V3_A = V[2 * A_filter_2D]
-
-        V_A = hypot.(V2_A, V3_A)
-
-        V2_VW = V[2 * VW_filter_2D_nzind - 1]
-        V3_VW = V[2 * VW_filter_2D_nzind]
-
-        V_VW = hypot.(V2_VW, V3_VW)
-
-        ww[2] = maximum(V_A)
-        ww[3] = mean(V_A) * π * (1.5 * BP7_coeff.RVW)^2 * BP7_coeff.μ * 10^9
-        ww[3] = mean(V_VW) * π * (BP7_coeff.RVW) ^ 2 * BP7_coeff.μ * 10^9
-        write(io, ww)
+        write(io, "# Here is the time-seris data.\n")
+        writedlm(io, ww)
     end
 end
 
@@ -528,23 +532,23 @@ function write_to_file(path, ψδ, t, i, odeparam, station_strings, station_indi
                 end
             end
 
+            ww = Array{Float64}(undef, 1, 4)
+            ww[1] = t
+            V2_A = V[2 * A_filter_2D_nzind .- 1]
+            V3_A = V[2 * A_filter_2D_nzind]
+    
+            V_A = hypot.(V2_A, V3_A)
+    
+            V2_VW = V[2 * VW_filter_2D_nzind .- 1]
+            V3_VW = V[2 * VW_filter_2D_nzind]
+    
+            V_VW = hypot.(V2_VW, V3_VW)
+    
+            ww[2] = maximum(V_A)
+            ww[3] = mean(V_A) * π * (1.5 * BP7_coeff.RVW)^2 * BP7_coeff.μ * 10^9
+            ww[4] = mean(V_VW) * π * (BP7_coeff.RVW) ^ 2 * BP7_coeff.μ * 10^9
             open(path * "global.dat", "a") do io 
-                ww = Array{Float64}(undef, 1, 4)
-                ww[1] = t
-                V2_A = V[2 * A_filter_2D_nzind - 1]
-                V3_A = V[2 * A_filter_2D]
-        
-                V_A = hypot.(V2_A, V3_A)
-        
-                V2_VW = V[2 * VW_filter_2D_nzind - 1]
-                V3_VW = V[2 * VW_filter_2D_nzind]
-        
-                V_VW = hypot.(V2_VW, V3_VW)
-        
-                ww[2] = maximum(V_A)
-                ww[3] = mean(V_A) * π * (1.5 * BP7_coeff.RVW)^2 * BP7_coeff.μ * 10^9
-                ww[3] = mean(V_VW) * π * (BP7_coeff.RVW) ^ 2 * BP7_coeff.μ * 10^9
-                write(io, ww)
+                writedlm(io, ww)
             end
         end
         if mod(ctr[], 1000) == 0
