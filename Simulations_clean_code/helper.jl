@@ -475,9 +475,9 @@ function create_text_files(path, station_strings, station_indices, δ, τb, θ, 
     # ww[2] = maximum(V_A)
     # ww[3] = mean(V_A) * π * (1.5 * BP7_coeff.RVW)^2 * BP7_coeff.μ * 10^9
     # ww[3] = mean(V_VW) * π * (BP7_coeff.RVW) ^ 2 * BP7_coeff.μ * 10^9
-    ww[2] = -2.0000000E0
-    ww[3] = 1.0124054E13
-    ww[4] = 1.0124054E13
+    ww[2] = 0.0
+    ww[3] = 0.0
+    ww[4] = 0.0
         
     open(path * "global.dat","w") do io
         write(io, "# This is the file header: \n")
@@ -485,7 +485,7 @@ function create_text_files(path, station_strings, station_indices, δ, τb, θ, 
         write(io, "# code=Thrase\n")
         write(io, "# modeler = A. Chen, B. A. Erickson\n")
         write(io, "# date=$(Dates.format(now(), "yyyymmdd"))\n")
-        write(io, "# element_size = 10 m, DRS=$(BP7_coeff.DRS), Lx = $(LX)\n")
+        write(io, "# element_size = 10 m, DRS=$(BP7_coeff.DRS), Lx = $(Lx)\n")
         write(io, "# location = 1.5 times VW patch radius\n")
         write(io, "# minimum_time_step=1e-10\n")
         write(io, "# maximum_time_step=undef\n")
