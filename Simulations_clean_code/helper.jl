@@ -440,8 +440,8 @@ function create_text_files(path, station_strings, station_indices, δ, τb, θ, 
             write(io, "# problem=SEAS Benchmark BP7-QD\n")  # 
             write(io, "# code=Thrase\n")
             write(io, "# modeler=A. Chen, B. A. Erickson\n")
-            write(io, "# date=2023/01/09\n")
-            write(io, "# element size=1000 m\n")
+            write(io, "# date=$(Dates.format(now(), "yyyymmdd"))\n")
+            write(io, "# element size=10 m\n")
             write(io, "#location=on fault, 0km along strike, 8km away from the fault, 0km depth")
             write(io, "# minimum_time_step=0.1\n")
             write(io, "# maximum_time_step=3.157e6\n")
@@ -485,7 +485,7 @@ function create_text_files(path, station_strings, station_indices, δ, τb, θ, 
         write(io, "# code=Thrase\n")
         write(io, "# modeler = A. Chen, B. A. Erickson\n")
         write(io, "# date=$(Dates.format(now(), "yyyymmdd"))\n")
-        write(io, "# element_size = 10 m\n")
+        write(io, "# element_size = 10 m, DRS=$(BP7_coeff.DRS), Lx = $(LX)\n")
         write(io, "# location = 1.5 times VW patch radius\n")
         write(io, "# minimum_time_step=1e-10\n")
         write(io, "# maximum_time_step=undef\n")
@@ -494,8 +494,8 @@ function create_text_files(path, station_strings, station_indices, δ, τb, θ, 
         write(io, "# Column #2 = Max_slip_rate (log10 m/s)\n")
         write(io, "# Column #3 = Moment_rate (N-m/s) \n")
         write(io, "# Column #4 = Moment_rate of VW patch (N-m/s)\n")
-        write(io, "# The line below lists the names of the data fields")
-        write(io, "t\t max_slip\t moment_rate\t moment_rate_vw\n")
+        write(io, "# The line below lists the names of the data fields\n")
+        write(io, "t\t max_slip_rate\t moment_rate\t moment_rate_vw\n")
         write(io, "# Here is the time-seris data.\n")
         writedlm(io, ww)
     end
@@ -544,7 +544,7 @@ function write_to_file(path, ψδ, t, i, odeparam, station_strings, station_indi
     
             V_VW = hypot.(V2_VW, V3_VW)
     
-            ww[2] = maximum(V_A)
+            ww[2] = log(10, maximum(V_A))
             ww[3] = mean(V_A) * π * (1.5 * BP7_coeff.RVW)^2 * BP7_coeff.μ * 10^9
             ww[4] = mean(V_VW) * π * (BP7_coeff.RVW) ^ 2 * BP7_coeff.μ * 10^9
             open(path * "global.dat", "a") do io 
